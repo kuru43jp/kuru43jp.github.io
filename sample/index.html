@@ -273,12 +273,12 @@
             try {
                 window.speechSynthesis.cancel();
                 
-                let textToSpeak = 'たなごちゃんです';
+                let textToSpeak = 'いやーん';
                 
                 if (totalCount === 503) {
                     textToSpeak = 'ゴマリサンです';
                 } else if (totalCount === 10) {
-                    textToSpeak = 'つぬけです';
+                    textToSpeak = 'つぬけでーす';
                 } else if (totalCount > 0 && totalCount % 50 === 0) {
                     const soku = Math.floor(totalCount / 100);
                     const isHan = (totalCount % 100) === 50;
@@ -294,12 +294,12 @@
 
                     if (isHan) {
                         if (soku === 0) {
-                            textToSpeak = 'はんそくです';
+                            textToSpeak = 'はんそくでーす';
                         } else {
-                            textToSpeak = sokuStr + 'はんです';
+                            textToSpeak = sokuStr + 'はんでーす';
                         }
                     } else {
-                        textToSpeak = sokuStr + 'です';
+                        textToSpeak = sokuStr + 'でーす';
                     }
                 }
 
