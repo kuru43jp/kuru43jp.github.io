@@ -308,10 +308,10 @@
         }
 
         function speakTanago(totalCount) {
-            let textToSpeak = 'たなごちゃんでーす';
+            let textToSpeak = 'たなごちゃんです';
             
             if (totalCount === 503) {
-                textToSpeak = 'ゴーマリサンでーす';
+                textToSpeak = 'ゴマリサンです';
             } else if (totalCount === 10) {
                 textToSpeak = 'つぬけです';
             } else if (totalCount > 0 && totalCount % 50 === 0) {
@@ -329,9 +329,9 @@
 
                 if (isHan) {
                     if (soku === 0) {
-                        textToSpeak = 'はんそくでーす';
+                        textToSpeak = 'はんそくです';
                     } else {
-                        textToSpeak = sokuStr + 'はんでーす';
+                        textToSpeak = sokuStr + 'はんです';
                     }
                 } else {
                     textToSpeak = sokuStr + 'です';
