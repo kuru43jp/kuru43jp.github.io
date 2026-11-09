@@ -3,135 +3,72 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴ釣り大会 リアルタイム集計アプリ</title>
-    <!-- Tailwind CSS CDN -->
+    <title>タナゴ釣り大会 リアルタイム集計（GAS連携）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
-        body {
-            font-family: 'Noto Sans JP', sans-serif;
-            touch-action: manipulation;
-            -webkit-tap-highlight-color: transparent;
-        }
-        .btn-active:active {
-            transform: scale(0.96);
-        }
+        body { font-family: 'Noto Sans JP', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+        .btn-active:active { transform: scale(0.96); }
     </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
 
-    <!-- Header Bar -->
     <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-3 py-3 sticky top-0 z-20 flex items-center justify-between">
         <div class="flex items-center space-x-2">
             <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-black text-xs">大会</div>
             <div>
-                <h1 class="font-bold text-sm leading-tight tracking-wide">タナゴ釣り大会 集計</h1>
-                <p class="text-[10px] text-slate-400">Live Tournament Counter</p>
+                <h1 class="font-bold text-sm leading-tight tracking-wide">GASリアルタイム集計</h1>
+                <p class="text-[10px] text-slate-400">Spreadsheet Connected</p>
             </div>
         </div>
-        
         <div class="flex items-center space-x-1.5">
-            <button onclick="openParticipantModal()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white transition text-[11px] font-bold shadow">
-                👥 選手管理
-            </button>
-            <button onclick="openRankingModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-500 text-white transition text-[11px] font-bold shadow">
-                🏆 順位速報
-            </button>
+            <button onclick="openParticipantModal()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold shadow">👥 選手管理</button>
+            <button onclick="openRankingModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-600 text-white text-[11px] font-bold shadow">🏆 順位速報</button>
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
-
-        <!-- 大会ステータス & 競技時間 -->
         <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg">
-            <div class="flex justify-between items-center border-b border-slate-700/60 pb-2 mb-3">
-                <div class="text-xs font-bold text-slate-300">競技タイマー</div>
-                <div class="flex items-center space-x-2">
-                    <span id="timerDisplay" class="font-mono text-base font-bold text-emerald-400">00:00:00</span>
-                    <button id="startTimerBtn" onclick="toggleTournamentTimer()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">開始</button>
-                    <button onclick="resetTournamentTimer()" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
-                </div>
-            </div>
-
-            <!-- 選択中の選手表示・切り替え -->
             <div class="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-slate-700/40">
                 <div>
                     <span class="text-[10px] text-slate-400 uppercase font-bold block">集計中の選手</span>
-                    <span id="currentParticipantName" class="text-base font-extrabold text-emerald-300">選手が未登録です</span>
+                    <span id="currentParticipantName" class="text-base font-extrabold text-emerald-300">読み込み中...</span>
                 </div>
-                <button onclick="openParticipantModal()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg font-bold">
-                    選手変更 ▾
-                </button>
+                <button onclick="openParticipantModal()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg font-bold">選手変更 ▾</button>
             </div>
         </section>
 
-        <!-- メインカウンター部（選択中の選手に加算） -->
         <section class="flex flex-col items-center my-auto w-full">
-            
-            <!-- 性別カウント内訳ボタン -->
             <div class="flex w-full bg-slate-800 p-1 rounded-xl mb-4 border border-slate-700 space-x-1 shadow-inner">
-                <button onclick="setTargetGender('male')" id="genderBtnMale" 
-                        class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-blue-600/30 text-blue-300 border border-blue-500/50">
-                    <span>♂ オス</span>
-                    <span id="maleCountBadge" class="bg-blue-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
+                <button onclick="setTargetGender('male')" id="genderBtnMale" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-blue-600/30 text-blue-300 border border-blue-500/50">
+                    <span>♂ オス</span><span id="maleCountBadge" class="bg-blue-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
                 </button>
-                <button onclick="setTargetGender('female')" id="genderBtnFemale" 
-                        class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400 hover:text-slate-200">
-                    <span>♀ メス</span>
-                    <span id="femaleCountBadge" class="bg-pink-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
+                <button onclick="setTargetGender('female')" id="genderBtnFemale" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400">
+                    <span>♀ メス</span><span id="femaleCountBadge" class="bg-pink-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
                 </button>
-                <button onclick="setTargetGender('unknown')" id="genderBtnUnknown" 
-                        class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400 hover:text-slate-200">
-                    <span>? 不明</span>
-                    <span id="unknownCountBadge" class="bg-slate-600 text-slate-100 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
+                <button onclick="setTargetGender('unknown')" id="genderBtnUnknown" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400">
+                    <span>? 不明</span><span id="unknownCountBadge" class="bg-slate-600 text-slate-100 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
                 </button>
             </div>
 
-            <!-- 巨大カウントボタン -->
             <div class="relative w-full max-w-[260px] aspect-square my-2 flex items-center justify-center">
-                <button id="mainCounterBtn" onclick="incrementActiveParticipant()" 
-                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black shadow-2xl border-4 border-emerald-300/40 flex flex-col items-center justify-center relative active:brightness-110 select-none">
+                <button onclick="incrementActiveParticipant()" class="btn-active w-full h-full rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black shadow-2xl border-4 border-emerald-300/40 flex flex-col items-center justify-center relative active:brightness-110 select-none">
                     <span class="text-[11px] uppercase tracking-widest font-bold text-emerald-950/70 mb-1" id="activeGenderLabel">♂ オスをカウント</span>
                     <span id="giantCountNumber" class="text-7xl font-black tracking-tight drop-shadow-md">0</span>
-                    <span class="mt-2 text-xs font-bold bg-slate-950/20 text-slate-900 px-3 py-1 rounded-full backdrop-blur-sm">
-                        TAP TO COUNT
-                    </span>
+                    <span class="mt-2 text-xs font-bold bg-slate-950/20 text-slate-900 px-3 py-1 rounded-full">TAP TO COUNT</span>
                 </button>
             </div>
 
-            <!-- マイナス・取り消し -->
             <div class="flex items-center justify-center space-x-3 mt-4 w-full">
-                <button onclick="decrementActiveParticipant()" 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
-                    ➖ 1減らす (-1)
-                </button>
-                <button onclick="undoActiveParticipant()" id="undoBtn" disabled 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-800 disabled:opacity-40 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
-                    ↩ 取り消し
-                </button>
+                <button onclick="decrementActiveParticipant()" class="btn-active flex-1 max-w-[150px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">➖ 1減らす (-1)</button>
             </div>
-
         </section>
 
-        <!-- ボード下部アクション -->
         <section class="grid grid-cols-2 gap-3 mt-2">
-            <button onclick="openRankingModal()" 
-                    class="btn-active bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex items-center justify-center space-x-1">
-                <span>🏆 ランキング確認</span>
-            </button>
-            <button onclick="exportTournamentCSV()" 
-                    class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1">
-                <span>💾 CSV書き出し</span>
-            </button>
+            <button onclick="openRankingModal()" class="btn-active bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex items-center justify-center space-x-1"><span>🏆 ランキング確認</span></button>
+            <button onclick="syncWithCloud()" class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1"><span>🔄 データを同期</span></button>
         </section>
-
     </main>
-
-    <!-- Footer -->
-    <footer class="bg-slate-900 border-t border-slate-800 py-2.5 px-4 text-center text-xs text-slate-500">
-        <span>タナゴ大会集計システム Ver 1.0</span>
-    </footer>
 
     <!-- 選手管理モーダル -->
     <div id="participantModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -140,19 +77,13 @@
                 <h2 class="font-bold text-slate-100 text-sm">参加者（選手）の管理</h2>
                 <button onclick="closeParticipantModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
             </div>
-            
             <div class="p-4 space-y-3 overflow-y-auto flex-grow">
-                <!-- 新規選手追加フォーム -->
                 <div class="flex space-x-2">
-                    <input type="text" id="newParticipantInput" placeholder="選手名またはゼッケン番号..." 
-                           class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 flex-grow">
-                    <button onclick="addParticipant()" class="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-bold">追加</button>
+                    <input type="text" id="newParticipantInput" placeholder="選手名またはゼッケン番号..." class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 flex-grow">
+                    <button onclick="addParticipant()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold">追加</button>
                 </div>
-
-                <!-- 登録選手一覧 -->
                 <div id="participantList" class="space-y-2 mt-3"></div>
             </div>
-
             <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-end">
                 <button onclick="closeParticipantModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">完了</button>
             </div>
@@ -166,41 +97,36 @@
                 <h2 class="font-bold text-slate-100 text-sm">🏆 リアルタイム釣果ランキング</h2>
                 <button onclick="closeRankingModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
             </div>
-            
             <div id="rankingList" class="p-4 overflow-y-auto space-y-2.5 flex-grow"></div>
-
             <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
-                <button onclick="exportTournamentCSV()" class="text-xs font-semibold text-emerald-400">CSV書き出し</button>
+                <button onclick="syncWithCloud()" class="text-xs font-semibold text-emerald-400">🔄 最新に更新</button>
                 <button onclick="closeRankingModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
             </div>
         </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-800 text-emerald-400 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
     <script>
-        // 大会データ構造: 選手リストとアクティブ選手ID
-        let tournamentData = JSON.parse(localStorage.getItem('tanago_tournament')) || {
+        // ★ ここに先ほど取得したGASのウェブアプリURLを貼り付けてください
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbyymvqjoKmyEl9VKmX_15MhC1RAoGghnabEdLUD2nyJ6IZptdANFJ5Mr4IpBOQ7UEPj/exec";
+
+        let tournamentData = {
             participants: [
-                { id: 1, name: '選手 A', counts: { male: 0, female: 0, unknown: 0 }, history: [] },
-                { id: 2, name: '選手 B', counts: { male: 0, female: 0, unknown: 0 }, history: [] }
+                { id: 1, name: '選手 A', counts: { male: 0, female: 0, unknown: 0 } },
+                { id: 2, name: '選手 B', counts: { male: 0, female: 0, unknown: 0 } }
             ],
             activeId: 1
         };
 
         let currentTargetGender = 'male';
-        let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
-        let startTimeStamp = null;
 
         window.onload = () => {
-            ensureActiveParticipant();
-            updateUI();
+            syncWithCloud(); // 起動時にスプレッドシートから最新データを取得
         };
 
-        // 選手が見つからない場合のフォールバック
         function ensureActiveParticipant() {
             if (tournamentData.participants.length > 0) {
                 if (!tournamentData.participants.some(p => p.id === tournamentData.activeId)) {
@@ -215,42 +141,59 @@
             return tournamentData.participants.find(p => p.id === tournamentData.activeId);
         }
 
+        // --- GASとの通信（同期・保存） ---
+        async function syncWithCloud() {
+            showToast('クラウドから同期中...');
+            try {
+                const response = await fetch(GAS_API_URL);
+                const data = await response.json();
+                if (data && data.length > 0) {
+                    // スプレッドシートのデータをアプリ用に変換
+                    tournamentData.participants = data.map((item, idx) => ({
+                        id: idx + 1,
+                        name: item.name,
+                        counts: item.counts
+                    }));
+                    ensureActiveParticipant();
+                }
+                updateUI();
+                showToast('同期完了しました');
+            } catch (err) {
+                console.error(err);
+                showToast('同期に失敗しました');
+            }
+        }
+
+        async function saveToCloud() {
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(tournamentData)
+                });
+            } catch (err) {
+                console.error("保存エラー:", err);
+            }
+        }
+
         // --- カウント操作 ---
         function incrementActiveParticipant() {
             const p = getActiveParticipant();
-            if (!p) {
-                showToast('選手を登録・選択してください');
-                openParticipantModal();
-                return;
-            }
+            if (!p) { showToast('選手を登録してください'); openParticipantModal(); return; }
             p.counts[currentTargetGender]++;
-            p.history.push({ type: 'add', gender: currentTargetGender });
-            
-            saveToStorage();
+            saveToCloud();
             updateUI();
-            playBeep();
+            if ('vibrate' in navigator) navigator.vibrate(40);
         }
 
         function decrementActiveParticipant() {
             const p = getActiveParticipant();
             if (!p || p.counts[currentTargetGender] <= 0) return;
             p.counts[currentTargetGender]--;
-            p.history.push({ type: 'subtract', gender: currentTargetGender });
-            
-            saveToStorage();
+            saveToCloud();
             updateUI();
-        }
-
-        function undoActiveParticipant() {
-            const p = getActiveParticipant();
-            if (!p || p.history.length === 0) return;
-            const last = p.history.pop();
-            if (last.type === 'add' && p.counts[last.gender] > 0) p.counts[last.gender]--;
-            else if (last.type === 'subtract') p.counts[last.gender]++;
-            
-            saveToStorage();
-            updateUI();
-            showToast('直前の操作を取り消しました');
+            if ('vibrate' in navigator) navigator.vibrate(40);
         }
 
         function setTargetGender(g) {
@@ -262,7 +205,6 @@
             return p.counts.male + p.counts.female + p.counts.unknown;
         }
 
-        // --- 画面更新 ---
         function updateUI() {
             ensureActiveParticipant();
             const p = getActiveParticipant();
@@ -273,17 +215,14 @@
                 document.getElementById('femaleCountBadge').innerText = p.counts.female;
                 document.getElementById('unknownCountBadge').innerText = p.counts.unknown;
                 document.getElementById('giantCountNumber').innerText = p.counts[currentTargetGender];
-                document.getElementById('undoBtn').disabled = p.history.length === 0;
             } else {
                 document.getElementById('currentParticipantName').innerText = "選手がいません";
                 document.getElementById('maleCountBadge').innerText = 0;
                 document.getElementById('femaleCountBadge').innerText = 0;
                 document.getElementById('unknownCountBadge').innerText = 0;
                 document.getElementById('giantCountNumber').innerText = 0;
-                document.getElementById('undoBtn').disabled = true;
             }
 
-            // 性別ボタンのスタイル切り替え
             const gBtns = {
                 male: document.getElementById('genderBtnMale'),
                 female: document.getElementById('genderBtnFemale'),
@@ -303,15 +242,9 @@
             }
         }
 
-        // --- 選手管理機能 ---
-        function openParticipantModal() {
-            renderParticipantList();
-            document.getElementById('participantModal').classList.remove('hidden');
-        }
-        function closeParticipantModal() {
-            document.getElementById('participantModal').classList.add('hidden');
-            updateUI();
-        }
+        // --- 選手管理 ---
+        function openParticipantModal() { renderParticipantList(); document.getElementById('participantModal').classList.remove('hidden'); }
+        function closeParticipantModal() { document.getElementById('participantModal').classList.add('hidden'); updateUI(); }
 
         function renderParticipantList() {
             const container = document.getElementById('participantList');
@@ -323,17 +256,17 @@
                 const total = getTotalCount(p);
                 const isActive = p.id === tournamentData.activeId;
                 return `
-                    <div class="bg-slate-800 border ${isActive ? 'border-emerald-500/80 bg-slate-800/90' : 'border-slate-700/60'} rounded-xl p-3 flex items-center justify-between">
+                    <div class="bg-slate-800 border ${isActive ? 'border-emerald-500/80 bg-slate-800/90' : 'border-slate-700/60'} rounded-xl p-3 flex items-center justify-between text-xs">
                         <div>
-                            <div class="font-bold text-sm text-slate-200 flex items-center space-x-2">
+                            <div class="font-bold text-slate-200 flex items-center space-x-2">
                                 <span>${p.name}</span>
                                 ${isActive ? '<span class="bg-emerald-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-black">集計中</span>' : ''}
                             </div>
-                            <div class="text-xs text-slate-400 mt-0.5">釣果合計: <span class="font-bold text-emerald-400">${total} 匹</span> (♂${p.counts.male} / ♀${p.counts.female} / ?${p.counts.unknown})</div>
+                            <div class="text-slate-400 mt-0.5">合計: <b class="text-emerald-400">${total} 匹</b> (♂${p.counts.male}/♀${p.counts.female}/?${p.counts.unknown})</div>
                         </div>
-                        <div class="flex space-x-2">
-                            ${!isActive ? `<button onclick="switchParticipant(${p.id})" class="bg-emerald-600 hover:bg-emerald-500 text-white px-2.5 py-1 rounded-lg text-xs font-bold">選択</button>` : ''}
-                            <button onclick="deleteParticipant(${p.id})" class="bg-rose-600/80 hover:bg-rose-600 text-white px-2 py-1 rounded-lg text-xs font-bold">削除</button>
+                        <div class="space-x-1">
+                            ${!isActive ? `<button onclick="switchParticipant(${p.id})" class="bg-emerald-600 text-white px-2 py-1 rounded font-bold">選択</button>` : ''}
+                            <button onclick="deleteParticipant(${p.id})" class="bg-rose-600 text-white px-2 py-1 rounded font-bold">削除</button>
                         </div>
                     </div>
                 `;
@@ -346,23 +279,18 @@
             if (!name) { showToast('選手名を入力してください'); return; }
             
             const newId = Date.now();
-            tournamentData.participants.push({
-                id: newId,
-                name: name,
-                counts: { male: 0, female: 0, unknown: 0 },
-                history: []
-            });
+            tournamentData.participants.push({ id: newId, name: name, counts: { male: 0, female: 0, unknown: 0 } });
             if (!tournamentData.activeId) tournamentData.activeId = newId;
             
             input.value = '';
-            saveToStorage();
+            saveToCloud();
             renderParticipantList();
+            updateUI();
             showToast(`${name} を追加しました`);
         }
 
         function switchParticipant(id) {
             tournamentData.activeId = id;
-            saveToStorage();
             renderParticipantList();
             updateUI();
             showToast('集計対象を変更しました');
@@ -372,16 +300,16 @@
             if (confirm('この選手を削除しますか？')) {
                 tournamentData.participants = tournamentData.participants.filter(p => p.id !== id);
                 ensureActiveParticipant();
-                saveToStorage();
+                saveToCloud();
                 renderParticipantList();
                 updateUI();
             }
         }
 
-        // --- ランキング速報モーダル ---
-        function openRankingModal() {
+        // --- ランキング速報 ---
+        async function openRankingModal() {
+            await syncWithCloud(); // 開くときに最新をロード
             const container = document.getElementById('rankingList');
-            // 釣果合計順にソート
             const sorted = [...tournamentData.participants].sort((a, b) => getTotalCount(b) - getTotalCount(a));
 
             if (sorted.length === 0) {
@@ -396,12 +324,11 @@
                                 <span class="text-base w-6 text-center ${rankClass}">#${index + 1}</span>
                                 <div>
                                     <div class="font-bold text-slate-200 text-sm">${p.name}</div>
-                                    <div class="text-slate-400">♂ ${p.counts.male}匹 / ♀ ${p.counts.female}匹 / ? ${p.counts.unknown}匹</div>
+                                    <div class="text-slate-400">♂ ${p.counts.male} / ♀ ${p.counts.female} / ? ${p.counts.unknown}</div>
                                 </div>
                             </div>
                             <div class="text-right">
-                                <span class="text-lg font-black text-emerald-400">${total}</span>
-                                <span class="text-slate-400 text-[10px]"> 匹</span>
+                                <span class="text-lg font-black text-emerald-400">${total}</span><span class="text-slate-400 text-[10px]"> 匹</span>
                             </div>
                         </div>
                     `;
@@ -410,71 +337,6 @@
             document.getElementById('rankingModal').classList.remove('hidden');
         }
         function closeRankingModal() { document.getElementById('rankingModal').classList.add('hidden'); }
-
-        // --- 競技タイマー ---
-        function toggleTournamentTimer() { isTimerRunning ? pauseTournamentTimer() : startTournamentTimer(); }
-        
-        function startTournamentTimer() {
-            if (isTimerRunning) return;
-            isTimerRunning = true;
-            document.getElementById('startTimerBtn').innerText = '一時停止';
-            const now = Date.now();
-            if (!startTimeStamp) startTimeStamp = now - (secondsElapsed * 1000);
-
-            timerInterval = setInterval(() => {
-                secondsElapsed = Math.floor((Date.now() - startTimeStamp) / 1000);
-                updateTimerDisplay();
-            }, 1000);
-        }
-
-        function pauseTournamentTimer() {
-            isTimerRunning = false;
-            clearInterval(timerInterval);
-            document.getElementById('startTimerBtn').innerText = '再開';
-        }
-
-        function resetTournamentTimer() {
-            pauseTournamentTimer();
-            secondsElapsed = 0;
-            startTimeStamp = null;
-            document.getElementById('startTimerBtn').innerText = '開始';
-            updateTimerDisplay();
-        }
-
-        function updateTimerDisplay() {
-            const hrs = Math.floor(secondsElapsed / 3600).toString().padStart(2, '0');
-            const mins = Math.floor((secondsElapsed % 3600) / 60).toString().padStart(2, '0');
-            const secs = (secondsElapsed % 60).toString().padStart(2, '0');
-            document.getElementById('timerDisplay').innerText = `${hrs}:${mins}:${secs}`;
-        }
-
-        // --- CSV書き出し ---
-        function exportTournamentCSV() {
-            if (tournamentData.participants.length === 0) { showToast('データがありません'); return; }
-            let csv = "data:text/csv;charset=utf-8,順位,選手名,合計釣果,オス(♂),メス(♀),不明(?)\n";
-            const sorted = [...tournamentData.participants].sort((a, b) => getTotalCount(b) - getTotalCount(a));
-            
-            sorted.forEach((p, idx) => {
-                csv += `${idx + 1},"${p.name}",${getTotalCount(p)},${p.counts.male},${p.counts.female},${p.counts.unknown}\n`;
-            });
-
-            const link = document.createElement("a");
-            link.setAttribute("href", encodeURI(csv));
-            link.setAttribute("download", "tanago_tournament_result.csv");
-            document.body.appendChild(link);
-            link.click();
-            document.body.removeChild(link);
-            showToast('CSVファイルを書き出しました');
-        }
-
-        // --- ストレージ保存 ---
-        function saveToStorage() {
-            localStorage.setItem('tanago_tournament', JSON.stringify(tournamentData));
-        }
-
-        function playBeep() {
-            if ('vibrate' in navigator) navigator.vibrate(40);
-        }
 
         function showToast(msg) {
             const t = document.getElementById('toast');
