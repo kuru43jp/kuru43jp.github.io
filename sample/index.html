@@ -77,7 +77,7 @@
                 </div>
 
                 <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (時計基準)</span>
                     <div class="flex items-baseline justify-center">
                         <span id="catchRateDisplay" class="text-xl font-extrabold text-amber-400">0.0</span>
                         <span class="text-[10px] text-slate-400 ml-0.5">匹/h</span>
@@ -160,7 +160,7 @@
     <!-- Footer Controls -->
     <footer class="bg-slate-900 border-t border-slate-800 py-2.5 px-4 text-center">
         <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
-            <span>タナゴ専用仕様 Ver 2.7 (経過時間ベース時速対応)</span>
+            <span>タナゴ専用仕様 Ver 2.6 (時間帯別記録対応)</span>
             <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
                 🗑️ カウンター初期化
             </button>
@@ -189,6 +189,7 @@
 
     <script>
         let counts = { male: 0, female: 0, unknown: 0 };
+        // 時間帯別の内訳を保持するオブジェクト (例: { "10:00〜11:00": { male: 5, female: 3, unknown: 0 }, "11:00〜12:00": { ... } })
         let hourlyCounts = {}; 
         let currentTargetGender = 'male';
         let actionHistory = [];
@@ -344,6 +345,7 @@
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
         }
 
+        // --- 現在の時刻（例: 14:00〜15:00）のキーを生成するヘルパー ---
         function getCurrentHourRangeKey() {
             const now = new Date();
             const startHour = now.getHours();
@@ -357,6 +359,7 @@
         function incrementCounter() {
             counts[currentTargetGender]++;
             
+            // 現在の時計時刻ベースの時間帯キーを取得して加算
             const hourKey = getCurrentHourRangeKey();
             if (!hourlyCounts[hourKey]) {
                 hourlyCounts[hourKey] = { male: 0, female: 0, unknown: 0 };
@@ -444,7 +447,7 @@
             calculateCatchRate();
         }
 
-        // --- Timer & Rate Logic (経過時間ベースの時速計算) ---
+        // --- Timer & Rate Logic ---
         function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(); }
         
         function startTimer() {
@@ -503,7 +506,6 @@
                 document.getElementById('catchRateDisplay').innerText = "0.0";
                 return;
             }
-            // 経過時間（秒）から正確な時速（1時間あたりの釣果）を算出
             const rate = total / (secondsElapsed / 3600);
             document.getElementById('catchRateDisplay').innerText = rate.toFixed(1);
         }
@@ -530,7 +532,7 @@
                 location: document.getElementById('locationInput').value.trim() || '指定なし',
                 species: document.getElementById('speciesSelect').value,
                 counts: { ...counts },
-                hourlyCounts: { ...hourlyCounts },
+                hourlyCounts: { ...hourlyCounts }, // 時間帯別の内訳を保存
                 total: total,
                 durationSeconds: secondsElapsed,
                 hourlyRate: currentRate
@@ -593,7 +595,7 @@
             });
             const link = document.createElement("a");
             link.setAttribute("href", encodeURI(csv));
-            link.setAttribute("download", "tanago_log_duration_rate.csv");
+            link.setAttribute("download", "tanago_log_time_based.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -608,7 +610,7 @@
                 isTimerRunning,
                 hasAlerted2Hours,
                 location: document.getElementById('locationInput').value,
-                species: document.getElementById('speciesSelect'].value
+                species: document.getElementById('speciesSelect').value
             }));
         }
 
