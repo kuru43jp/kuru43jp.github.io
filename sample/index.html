@@ -77,7 +77,7 @@
                 </div>
 
                 <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (時計基準)</span>
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
                     <div class="flex items-baseline justify-center">
                         <span id="catchRateDisplay" class="text-xl font-extrabold text-amber-400">0.0</span>
                         <span class="text-[10px] text-slate-400 ml-0.5">匹/h</span>
@@ -160,7 +160,7 @@
     <!-- Footer Controls -->
     <footer class="bg-slate-900 border-t border-slate-800 py-2.5 px-4 text-center">
         <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
-            <span>タナゴ専用仕様 Ver 2.4</span>
+            <span>タナゴ専用仕様 Ver 2.7 (経過時間ベース時速対応)</span>
             <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
                 🗑️ カウンター初期化
             </button>
@@ -171,7 +171,7 @@
     <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
-                <h2 class="font-bold text-slate-100 text-sm">釣果履歴ログ</h2>
+                <h2 class="font-bold text-slate-100 text-sm">釣果履歴 & 時間帯別記録</h2>
                 <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
             </div>
             <div id="historyList" class="p-4 overflow-y-auto space-y-3 flex-grow"></div>
@@ -189,6 +189,7 @@
 
     <script>
         let counts = { male: 0, female: 0, unknown: 0 };
+        let hourlyCounts = {}; 
         let currentTargetGender = 'male';
         let actionHistory = [];
         let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
@@ -196,6 +197,7 @@
         let voiceEnabled = true, vibrationEnabled = true, wakeLockEnabled = true;
         let voiceGender = 'female';
         let wakeLock = null;
+        let hasAlerted2Hours = false;
 
         window.onload = () => {
             loadStateFromStorage();
@@ -207,6 +209,7 @@
             }
         };
 
+        // --- Screen Wake Lock API ---
         async function requestWakeLock() {
             if (!wakeLockEnabled || !('wakeLock' in navigator)) return;
             try {
@@ -253,6 +256,7 @@
             }
         }, { passive: true });
 
+        // --- 音声性別の切り替えボタン ---
         function toggleVoiceGender() {
             const btn = document.getElementById('voiceGenderBtn');
             if (voiceGender === 'female') {
@@ -268,41 +272,11 @@
             }
         }
 
-        function speakTanago(totalCount) {
+        function speakText(textToSpeak) {
             if (!voiceEnabled || !('speechSynthesis' in window)) return;
             try {
                 window.speechSynthesis.cancel();
                 
-                let textToSpeak = 'たなごちゃんです';
-                
-                if (totalCount === 503) {
-                    textToSpeak = 'ゴマリサンです';
-                } else if (totalCount === 10) {
-                    textToSpeak = 'つぬけです';
-                } else if (totalCount > 0 && totalCount % 50 === 0) {
-                    const soku = Math.floor(totalCount / 100);
-                    const isHan = (totalCount % 100) === 50;
-                    
-                    const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-                    let sokuStr = '';
-                    
-                    if (soku > 0 && soku <= 10) {
-                        sokuStr = numbers[soku] + 'そく';
-                    } else if (soku > 10) {
-                        sokuStr = soku + 'そく';
-                    }
-
-                    if (isHan) {
-                        if (soku === 0) {
-                            textToSpeak = 'はんそくです';
-                        } else {
-                            textToSpeak = sokuStr + 'はんです';
-                        }
-                    } else {
-                        textToSpeak = sokuStr + 'です';
-                    }
-                }
-
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'ja-JP';
 
@@ -333,13 +307,63 @@
             } catch (e) {}
         }
 
+        function speakTanago(totalCount) {
+            let textToSpeak = 'たなごちゃんでーす';
+            
+            if (totalCount === 503) {
+                textToSpeak = 'ゴーマリサンでーす';
+            } else if (totalCount === 10) {
+                textToSpeak = 'つぬけです';
+            } else if (totalCount > 0 && totalCount % 50 === 0) {
+                const soku = Math.floor(totalCount / 100);
+                const isHan = (totalCount % 100) === 50;
+                
+                const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+                let sokuStr = '';
+                
+                if (soku > 0 && soku <= 10) {
+                    sokuStr = numbers[soku] + 'そく';
+                } else if (soku > 10) {
+                    sokuStr = soku + 'そく';
+                }
+
+                if (isHan) {
+                    if (soku === 0) {
+                        textToSpeak = 'はんそくでーす';
+                    } else {
+                        textToSpeak = sokuStr + 'はんでーす';
+                    }
+                } else {
+                    textToSpeak = sokuStr + 'です';
+                }
+            }
+            speakText(textToSpeak);
+        }
+
         function triggerVibration() {
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
         }
 
+        function getCurrentHourRangeKey() {
+            const now = new Date();
+            const startHour = now.getHours();
+            const endHour = (startHour + 1) % 24;
+            const startStr = String(startHour).padStart(2, '0') + ':00';
+            const endStr = String(endHour).padStart(2, '0') + ':00';
+            return `${startStr}〜${endStr}`;
+        }
+
+        // --- Counter Logic ---
         function incrementCounter() {
             counts[currentTargetGender]++;
-            actionHistory.push({ type: 'add', gender: currentTargetGender });
+            
+            const hourKey = getCurrentHourRangeKey();
+            if (!hourlyCounts[hourKey]) {
+                hourlyCounts[hourKey] = { male: 0, female: 0, unknown: 0 };
+            }
+            hourlyCounts[hourKey][currentTargetGender]++;
+
+            actionHistory.push({ type: 'add', gender: currentTargetGender, hourKey: hourKey });
             
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
@@ -353,7 +377,15 @@
         function decrementCounter() {
             if (counts[currentTargetGender] > 0) {
                 counts[currentTargetGender]--;
-                actionHistory.push({ type: 'subtract', gender: currentTargetGender });
+                
+                const lastAdd = actionHistory.slice().reverse().find(a => a.type === 'add' && a.gender === currentTargetGender);
+                const hourKey = lastAdd ? lastAdd.hourKey : getCurrentHourRangeKey();
+                
+                if (hourlyCounts[hourKey] && hourlyCounts[hourKey][currentTargetGender] > 0) {
+                    hourlyCounts[hourKey][currentTargetGender]--;
+                }
+
+                actionHistory.push({ type: 'subtract', gender: currentTargetGender, hourKey: hourKey });
                 triggerVibration();
                 updateUI();
                 saveStateToStorage();
@@ -363,8 +395,18 @@
         function undoLastAction() {
             if (actionHistory.length === 0) return;
             const last = actionHistory.pop();
-            if (last.type === 'add' && counts[last.gender] > 0) counts[last.gender]--;
-            else if (last.type === 'subtract') counts[last.gender]++;
+            if (last.type === 'add' && counts[last.gender] > 0) {
+                counts[last.gender]--;
+                if (hourlyCounts[last.hourKey] && hourlyCounts[last.hourKey][last.gender] > 0) {
+                    hourlyCounts[last.hourKey][last.gender]--;
+                }
+            } else if (last.type === 'subtract') {
+                counts[last.gender]++;
+                if (!hourlyCounts[last.hourKey]) {
+                    hourlyCounts[last.hourKey] = { male: 0, female: 0, unknown: 0 };
+                }
+                hourlyCounts[last.hourKey][last.gender]++;
+            }
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -402,6 +444,7 @@
             calculateCatchRate();
         }
 
+        // --- Timer & Rate Logic (経過時間ベースの時速計算) ---
         function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(); }
         
         function startTimer() {
@@ -418,6 +461,13 @@
                 secondsElapsed = Math.floor((Date.now() - startTimeStamp) / 1000);
                 updateTimerDisplay();
                 calculateCatchRate();
+                
+                if (secondsElapsed >= 7200 && !hasAlerted2Hours) {
+                    hasAlerted2Hours = true;
+                    speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう");
+                    showToast("経過2時間：休憩をとりましょう");
+                }
+
                 saveStateToStorage();
             }, 1000);
         }
@@ -433,6 +483,7 @@
             pauseTimer();
             secondsElapsed = 0;
             startTimeStamp = null;
+            hasAlerted2Hours = false;
             document.getElementById('startTimerBtn').innerText = '開始';
             updateTimerDisplay();
             calculateCatchRate();
@@ -452,6 +503,7 @@
                 document.getElementById('catchRateDisplay').innerText = "0.0";
                 return;
             }
+            // 経過時間（秒）から正確な時速（1時間あたりの釣果）を算出
             const rate = total / (secondsElapsed / 3600);
             document.getElementById('catchRateDisplay').innerText = rate.toFixed(1);
         }
@@ -471,18 +523,20 @@
             if (total === 0) { showToast('釣果が0匹のため保存されません'); return; }
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
             const currentRate = secondsElapsed > 0 ? (total / (secondsElapsed / 3600)).toFixed(1) : total.toFixed(1);
+            
             history.unshift({
                 id: Date.now(),
                 date: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
                 location: document.getElementById('locationInput').value.trim() || '指定なし',
                 species: document.getElementById('speciesSelect').value,
                 counts: { ...counts },
+                hourlyCounts: { ...hourlyCounts },
                 total: total,
                 durationSeconds: secondsElapsed,
                 hourlyRate: currentRate
             });
             localStorage.setItem('tanago_history', JSON.stringify(history));
-            showToast('釣果を保存しました！');
+            showToast('釣果と時間帯別記録を保存しました！');
         }
 
         function openHistoryModal() {
@@ -491,20 +545,36 @@
             if (history.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">履歴はありません</div>`;
             } else {
-                container.innerHTML = history.map(item => `
-                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs space-y-1">
-                        <div class="flex justify-between font-bold text-slate-200">
-                            <span class="text-emerald-400">${item.date}</span>
-                            <span>計 ${item.total} 匹 (${item.hourlyRate} 匹/h)</span>
+                container.innerHTML = history.map(item => {
+                    let hourlyHtml = '';
+                    if (item.hourlyCounts && Object.keys(item.hourlyCounts).length > 0) {
+                        hourlyHtml = `<div class="mt-2 pt-2 border-t border-slate-700/60 space-y-1">` +
+                            Object.keys(item.hourlyCounts).sort().map(hourKey => {
+                                const hc = item.hourlyCounts[hourKey];
+                                const hTotal = (hc.male || 0) + (hc.female || 0) + (hc.unknown || 0);
+                                return `<div class="flex justify-between text-[11px] text-slate-400 pl-2">
+                                    <span>🕐 ${hourKey}</span>
+                                    <span>計 <b class="text-emerald-300">${hTotal}匹</b> (♂${hc.male}/♀${hc.female}/?${hc.unknown})</span>
+                                </div>`;
+                            }).join('') + `</div>`;
+                    }
+
+                    return `
+                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs space-y-1">
+                            <div class="flex justify-between font-bold text-slate-200">
+                                <span class="text-emerald-400">${item.date}</span>
+                                <span>計 ${item.total} 匹 (${item.hourlyRate} 匹/h)</span>
+                            </div>
+                            <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}</div>
+                            <div class="flex space-x-3 text-slate-300 pt-1 border-t border-slate-700">
+                                <span class="text-blue-400">♂ ${item.counts.male}</span>
+                                <span class="text-pink-400">♀ ${item.counts.female}</span>
+                                <span class="text-slate-400">? ${item.counts.unknown}</span>
+                            </div>
+                            ${hourlyHtml}
                         </div>
-                        <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}</div>
-                        <div class="flex space-x-3 text-slate-300 pt-1 border-t border-slate-700">
-                            <span class="text-blue-400">♂ ${item.counts.male}</span>
-                            <span class="text-pink-400">♀ ${item.counts.female}</span>
-                            <span class="text-slate-400">? ${item.counts.unknown}</span>
-                        </div>
-                    </div>
-                `).join('');
+                    `;
+                }).join('');
             }
             document.getElementById('historyModal').classList.remove('hidden');
         }
@@ -513,11 +583,17 @@
         function exportLogsCSV() {
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
             if (history.length === 0) { showToast('データがありません'); return; }
-            let csv = "data:text/csv;charset=utf-8,日時,場所,魚種,合計,オス,メス,不明,時速\n";
-            history.forEach(r => { csv += `"${r.date}","${r.location}","${r.species}",${r.total},${r.counts.male},${r.counts.female},${r.counts.unknown},${r.hourlyRate}\n`; });
+            let csv = "data:text/csv;charset=utf-8,日時,場所,魚種,合計,オス,メス,不明,平均時速,時間帯別内訳\n";
+            history.forEach(r => {
+                let hourlyStr = "";
+                if (r.hourlyCounts) {
+                    hourlyStr = Object.keys(r.hourlyCounts).sort().map(k => `${k}:計${(r.hourlyCounts[k].male||0)+(r.hourlyCounts[k].female||0)+(r.hourlyCounts[k].unknown||0)}匹(♂${r.hourlyCounts[k].male}/♀${r.hourlyCounts[k].female}/?${r.hourlyCounts[k].unknown})`).join(" / ");
+                }
+                csv += `"${r.date}","${r.location}","${r.species}",${r.total},${r.counts.male},${r.counts.female},${r.counts.unknown},${r.hourlyRate},"${hourlyStr}"\n`;
+            });
             const link = document.createElement("a");
             link.setAttribute("href", encodeURI(csv));
-            link.setAttribute("download", "tanago_log.csv");
+            link.setAttribute("download", "tanago_log_duration_rate.csv");
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
@@ -526,11 +602,13 @@
         function saveStateToStorage() {
             localStorage.setItem('tanago_current_session', JSON.stringify({
                 counts,
+                hourlyCounts,
                 secondsElapsed,
                 startTimeStamp,
                 isTimerRunning,
+                hasAlerted2Hours,
                 location: document.getElementById('locationInput').value,
-                species: document.getElementById('speciesSelect').value
+                species: document.getElementById('speciesSelect'].value
             }));
         }
 
@@ -540,9 +618,11 @@
                 try {
                     const data = JSON.parse(saved);
                     counts = data.counts || counts;
+                    hourlyCounts = data.hourlyCounts || {};
                     secondsElapsed = data.secondsElapsed || 0;
                     startTimeStamp = data.startTimeStamp || null;
                     isTimerRunning = data.isTimerRunning || false;
+                    hasAlerted2Hours = data.hasAlerted2Hours || false;
                     
                     if (data.location) document.getElementById('locationInput').value = data.location;
                     if (data.species) document.getElementById('speciesSelect').value = data.species;
@@ -554,6 +634,13 @@
                             secondsElapsed = Math.floor((Date.now() - startTimeStamp) / 1000);
                             updateTimerDisplay();
                             calculateCatchRate();
+                            
+                            if (secondsElapsed >= 7200 && !hasAlerted2Hours) {
+                                hasAlerted2Hours = true;
+                                speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう");
+                                showToast("経過2時間：休憩をとりましょう");
+                            }
+
                             saveStateToStorage();
                         }, 1000);
                     }
@@ -564,6 +651,7 @@
         function confirmResetAll() {
             if (confirm("リセットしますか？")) {
                 counts = { male: 0, female: 0, unknown: 0 };
+                hourlyCounts = {};
                 actionHistory = [];
                 resetTimer();
                 updateUI();
