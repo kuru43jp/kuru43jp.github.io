@@ -16,13 +16,20 @@
         .btn-active:active {
             transform: scale(0.96);
         }
-        /* デジタルカウンター風ボタンの共通スタイル（画像ベース） */
         .counter-btn {
             position: relative;
             border-radius: 9999px;
             overflow: hidden;
             box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
             transition: transform 0.1s ease;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.03); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-effect {
+            animation: pulse-ring 3s infinite ease-in-out;
         }
     </style>
 </head>
@@ -184,7 +191,7 @@
     <!-- Footer Controls -->
     <footer class="bg-slate-900 border-t border-slate-800 py-2 px-4 text-center">
         <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
-            <span>タナゴ専用仕様 Ver 3.5 (デジタル画像風)</span>
+            <span>タナゴ専用仕様 Final Ver</span>
             <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
                 🗑️ カウンター初期化
             </button>
@@ -207,7 +214,7 @@
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-emerald-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
@@ -330,34 +337,44 @@
             } catch (e) {}
         }
 
-        function speakTanago(totalCount) {
-            let textToSpeak = 'たなごちゃんです';
-            
-            if (totalCount === 503) {
-                textToSpeak = 'ごー丸さんです';
-            } else if (totalCount === 10) {
-                textToSpeak = 'つぬけです';
-            } else if (totalCount > 0 && totalCount % 50 === 0) {
-                const soku = Math.floor(totalCount / 100);
-                const isHan = (totalCount % 100) === 50;
-                
-                const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-                let sokuStr = '';
-                
-                if (soku > 0 && soku <= 10) {
-                    sokuStr = numbers[soku] + 'そく';
-                } else if (soku > 10) {
-                    sokuStr = soku + 'そく';
-                }
+        // --- 上の3つの合計数を計算する関数（「なんでも」を含めない） ---
+        function getTopThreeTotal() {
+            const m = Number(counts.male) || 0;
+            const f = Number(counts.female) || 0;
+            const o = Number(counts.other) || 0;
+            return m + f + o;
+        }
 
-                if (isHan) {
-                    if (soku === 0) {
-                        textToSpeak = 'はんそくです';
-                    } else {
-                        textToSpeak = sokuStr + 'はんです';
+        function speakTanago(topCount, isAnyButton = false) {
+            let textToSpeak = isAnyButton ? 'お魚ちゃんです' : 'たなごちゃんです';
+            
+            if (!isAnyButton) {
+                if (topCount === 503) {
+                    textToSpeak = 'ごー丸さんです';
+                } else if (topCount === 10) {
+                    textToSpeak = 'つぬけです';
+                } else if (topCount > 0 && topCount % 50 === 0) {
+                    const soku = Math.floor(topCount / 100);
+                    const isHan = (topCount % 100) === 50;
+                    
+                    const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+                    let sokuStr = '';
+                    
+                    if (soku > 0 && soku <= 10) {
+                        sokuStr = numbers[soku] + 'そく';
+                    } else if (soku > 10) {
+                        sokuStr = soku + 'そく';
                     }
-                } else {
-                    textToSpeak = sokuStr + 'です';
+
+                    if (isHan) {
+                        if (soku === 0) {
+                            textToSpeak = 'はんそくです';
+                        } else {
+                            textToSpeak = sokuStr + 'はんです';
+                        }
+                    } else {
+                        textToSpeak = sokuStr + 'です';
+                    }
                 }
             }
             speakText(textToSpeak);
@@ -393,7 +410,8 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanago(total);
+            const topTotal = getTopThreeTotal();
+            speakTanago(topTotal, false); // 上の3つの合計で節目判定
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -416,7 +434,7 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanago(total);
+            speakTanago(0, true); // 下のボタンは節目判定なしで「お魚ちゃんです」
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -457,7 +475,6 @@
             const a = Number(counts.any) || 0;
             const total = m + f + o + a;
 
-            // 3桁のデジタル風表示 (例: 003)
             document.getElementById('maleCountBadge').innerText = String(m).padStart(3, '0');
             document.getElementById('femaleCountBadge').innerText = String(f).padStart(3, '0');
             document.getElementById('otherCountBadge').innerText = String(o).padStart(3, '0');
