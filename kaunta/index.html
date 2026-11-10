@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴカウンター - 釣果記録アプリ</title>
+    <title>タナゴカウンター - デジタルボタン版</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -16,33 +16,33 @@
         .btn-active:active {
             transform: scale(0.96);
         }
-        @keyframes pulse-ring {
-            0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.03); opacity: 0.4; }
-            100% { transform: scale(0.95); opacity: 0.8; }
-        }
-        .pulse-effect {
-            animation: pulse-ring 3s infinite ease-in-out;
+        /* デジタルカウンター風ボタンの共通スタイル（画像ベース） */
+        .counter-btn {
+            position: relative;
+            border-radius: 9999px;
+            overflow: hidden;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            transition: transform 0.1s ease;
         }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
 
     <!-- Header Bar -->
-    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-3 py-2.5 sticky top-0 z-20 flex items-center justify-between">
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3 py-2.5 sticky top-0 z-20 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-            <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-black text-xs">魚</div>
+            <div class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">魚</div>
             <div>
                 <h1 class="font-bold text-base leading-tight tracking-wide">タナゴカウンター</h1>
-                <p class="text-[10px] text-slate-400">Tanago Micro-Fishing Counter</p>
+                <p class="text-[10px] text-slate-400">Digital Counter Edition</p>
             </div>
         </div>
         
         <div class="flex items-center space-x-1.5">
             <button id="wakeLockToggleBtn" onclick="toggleWakeLock()" class="px-2 py-1.5 rounded-lg bg-emerald-600 text-white transition text-[11px] font-bold shadow" title="常時消灯防止">消灯:ON</button>
             <button id="voiceGenderBtn" onclick="toggleVoiceGender()" class="px-2 py-1.5 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[11px] font-bold">声:女性</button>
-            <button id="voiceToggleBtn" onclick="toggleVoice()" class="px-2 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-emerald-400 transition text-[11px] font-bold">音声:ON</button>
-            <button id="vibrateToggleBtn" onclick="toggleVibration()" class="px-2 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-emerald-400 transition text-[11px] font-bold">振動:ON</button>
+            <button id="voiceToggleBtn" onclick="toggleVoice()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[11px] font-bold">音声:ON</button>
+            <button id="vibrateToggleBtn" onclick="toggleVibration()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[11px] font-bold">振動:ON</button>
         </div>
     </header>
 
@@ -50,15 +50,15 @@
     <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
 
         <!-- Top Status Card -->
-        <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg relative">
-            <div class="flex items-center justify-between border-b border-slate-700/60 pb-2 mb-3">
+        <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-lg relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
                 <div class="flex items-center space-x-2 flex-grow mr-2">
                     <span class="text-emerald-400 text-sm">📍</span>
                     <input type="text" id="locationInput" placeholder="ポイント名・釣り場メモ..." 
-                           class="bg-transparent text-sm font-medium focus:outline-none w-full text-slate-200 placeholder-slate-500 border-b border-transparent focus:border-emerald-500 transition">
+                           class="bg-transparent text-sm font-medium focus:outline-none w-full text-slate-200 placeholder-slate-600 border-b border-transparent focus:border-emerald-500 transition">
                 </div>
                 <!-- 五十音順の魚種リスト -->
-                <select id="speciesSelect" class="bg-slate-700 text-xs font-semibold rounded-lg px-2 py-1.5 border border-slate-600 text-emerald-300 focus:outline-none">
+                <select id="speciesSelect" class="bg-slate-800 text-xs font-semibold rounded-lg px-2 py-1.5 border border-slate-700 text-emerald-300 focus:outline-none">
                     <option value="アカヒレタビラ">アカヒレタビラ</option>
                     <option value="アブラボテ">アブラボテ</option>
                     <option value="イチモンジタナゴ">イチモンジタナゴ</option>
@@ -77,16 +77,16 @@
             </div>
 
             <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40">
+                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">経過時間</span>
                     <span id="timerDisplay" class="font-mono text-base font-bold text-slate-100">00:00:00</span>
                     <div class="mt-1 flex justify-center space-x-1">
                         <button id="startTimerBtn" onclick="toggleTimer()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">開始</button>
-                        <button onclick="resetTimer()" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
+                        <button onclick="resetTimer()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
                     </div>
                 </div>
 
-                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
+                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 flex flex-col justify-center">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
                     <div class="flex items-baseline justify-center">
                         <span id="catchRateDisplay" class="text-xl font-extrabold text-amber-400">0.0</span>
@@ -94,7 +94,7 @@
                     </div>
                 </div>
 
-                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
+                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 flex flex-col justify-center">
                     <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">合計</span>
                     <div class="flex items-baseline justify-center">
                         <span id="totalCatchDisplay" class="text-2xl font-black text-emerald-400">0</span>
@@ -107,45 +107,47 @@
         <!-- Main Tally Counter Display & Quick Count Button -->
         <section class="flex flex-col items-center my-auto w-full">
             
-            <!-- 上部の3つの丸い個別カウンターボタン -->
-            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-2">
-                <!-- ♂ オスボタン -->
+            <!-- 上部の3つのデジタル画像風ボタン（青・赤・緑）[cite: 2] -->
+            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1">
+                <!-- ♂ オスボタン (ブルー) -->
                 <button onclick="incrementCategory('male')" 
-                        class="btn-active aspect-square rounded-full bg-blue-950/70 border-2 border-blue-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
-                    <span class="text-xs font-black text-blue-300">♂ オス</span>
-                    <span id="maleCountBadge" class="text-2xl font-black text-blue-400 my-0.5">0</span>
-                    <span class="text-[9px] font-bold text-blue-200 bg-blue-900/80 px-2 py-0.5 rounded-full">+1</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-blue-900 to-blue-950 border-4 border-blue-600/80 flex flex-col items-center justify-center p-2 text-cyan-300">
+                    <span class="text-xs font-black tracking-widest text-cyan-200">♂ MALE</span>
+                    <span id="maleCountBadge" class="text-3xl font-mono font-black text-cyan-400 my-1 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">000</span>
+                    <span class="text-[9px] font-bold text-cyan-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
-                <!-- ♀ メスボタン -->
+
+                <!-- ♀ メスボタン (レッド) -->
                 <button onclick="incrementCategory('female')" 
-                        class="btn-active aspect-square rounded-full bg-pink-950/70 border-2 border-pink-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
-                    <span class="text-xs font-black text-pink-300">♀ メス</span>
-                    <span id="femaleCountBadge" class="text-2xl font-black text-pink-400 my-0.5">0</span>
-                    <span class="text-[9px] font-bold text-pink-200 bg-pink-900/80 px-2 py-0.5 rounded-full">+1</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-red-900 to-red-950 border-4 border-red-600/80 flex flex-col items-center justify-center p-2 text-rose-300">
+                    <span class="text-xs font-black tracking-widest text-rose-200">♀ FEMALE</span>
+                    <span id="femaleCountBadge" class="text-3xl font-mono font-black text-rose-400 my-1 drop-shadow-[0_0_8px_rgba(251,113,133,0.6)]">000</span>
+                    <span class="text-[9px] font-bold text-rose-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
-                <!-- ♂＆♀ ボタン -->
+
+                <!-- ♂＆♀ ボタン (グリーン) -->
                 <button onclick="incrementCategory('other')" 
-                        class="btn-active aspect-square rounded-full bg-emerald-950/70 border-2 border-emerald-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
-                    <span class="text-xs font-black text-emerald-300">♂＆♀</span>
-                    <span id="otherCountBadge" class="text-2xl font-black text-emerald-400 my-0.5">0</span>
-                    <span class="text-[9px] font-bold text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full">+1</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-emerald-900 to-emerald-950 border-4 border-emerald-600/80 flex flex-col items-center justify-center p-2 text-emerald-300">
+                    <span class="text-xs font-black tracking-widest text-emerald-200">♂&♀ OTHER</span>
+                    <span id="otherCountBadge" class="text-3xl font-mono font-black text-emerald-400 my-1 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]">000</span>
+                    <span class="text-[9px] font-bold text-emerald-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
             </div>
 
-            <!-- 下部の大きな丸いボタン（上のボタンと完全に独立した「なんでも」用カウンター）[cite: 1] -->
+            <!-- 下部の大きな丸い独立ボタン（「なんでも」用） -->
             <div class="relative w-full max-w-[260px] aspect-square my-1 flex items-center justify-center">
                 <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
 
                 <button id="mainCounterBtn" onclick="incrementAny()" 
-                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-500 to-yellow-700 text-slate-950 font-black shadow-2xl border-4 border-amber-300/40 flex flex-col items-center justify-center relative active:brightness-110 select-none">
-                    <span class="text-[11px] uppercase tracking-widest font-bold text-amber-950/90 mb-0.5">なんでも（独立）</span>
-                    <div class="text-[11px] font-bold text-amber-950/90 space-x-1.5 mb-0.5 bg-amber-400/30 px-2.5 py-0.5 rounded-full">
+                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-yellow-900 text-slate-950 font-black shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center relative active:brightness-110 select-none">
+                    <span class="text-[10px] uppercase tracking-widest font-bold text-amber-200 mb-0.5">なんでもカウンター</span>
+                    <div class="text-[11px] font-bold text-amber-100 space-x-1.5 mb-0.5 bg-slate-950/40 px-3 py-0.5 rounded-full border border-amber-500/30">
                         <span>♂:<span id="subMaleNum">0</span></span>
                         <span>♀:<span id="subFemaleNum">0</span></span>
                         <span>他:<span id="subOtherNum">0</span></span>
                     </div>
-                    <span id="giantCountNumber" class="text-5xl font-black tracking-tight drop-shadow-md">0</span>
-                    <span class="mt-1 text-[10px] font-bold bg-slate-950/20 text-slate-900 px-2.5 py-0.5 rounded-full backdrop-blur-sm">
+                    <span id="giantCountNumber" class="text-6xl font-mono font-black tracking-tight text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">000</span>
+                    <span class="mt-1 text-[10px] font-bold bg-slate-950/40 text-amber-200 px-3 py-0.5 rounded-full backdrop-blur-sm">
                         TAP TO COUNT
                     </span>
                 </button>
@@ -154,11 +156,11 @@
             <!-- Quick Adjust Control -->
             <div class="flex items-center justify-center space-x-3 mt-3 w-full">
                 <button onclick="decrementCounter()" 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                        class="btn-active flex-1 max-w-[130px] bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
                     ➖ 直近を1減らす (-1)
                 </button>
                 <button onclick="undoLastAction()" id="undoBtn" disabled 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-800 disabled:opacity-40 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                        class="btn-active flex-1 max-w-[130px] bg-slate-900 disabled:opacity-40 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
                     ↩ 取り消し
                 </button>
             </div>
@@ -172,7 +174,7 @@
                 💾 釣果ログに保存
             </button>
             <button onclick="openHistoryModal()" 
-                    class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow">
+                    class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow">
                 📖 履歴・記録一覧
             </button>
         </section>
@@ -182,7 +184,7 @@
     <!-- Footer Controls -->
     <footer class="bg-slate-900 border-t border-slate-800 py-2 px-4 text-center">
         <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
-            <span>タナゴ専用仕様 Ver 3.4</span>
+            <span>タナゴ専用仕様 Ver 3.5 (デジタル画像風)</span>
             <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
                 🗑️ カウンター初期化
             </button>
@@ -191,21 +193,21 @@
 
     <!-- History Modal -->
     <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
                 <h2 class="font-bold text-slate-100 text-sm">釣果履歴 & 時間帯別記録</h2>
                 <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
             </div>
             <div id="historyList" class="p-4 overflow-y-auto space-y-3 flex-grow"></div>
-            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center">
                 <button onclick="exportLogsCSV()" class="text-xs font-semibold text-emerald-400">CSV書き出し</button>
-                <button onclick="closeHistoryModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
+                <button onclick="closeHistoryModal()" class="bg-slate-800 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
             </div>
         </div>
     </div>
 
     <!-- Toast -->
-    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-800 text-emerald-400 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-emerald-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
@@ -259,7 +261,7 @@
                     wakeLock.release();
                     wakeLock = null;
                 }
-                btn.className = "px-2 py-1.5 rounded-lg bg-slate-700 text-slate-400 transition text-[11px] font-bold";
+                btn.className = "px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 transition text-[11px] font-bold";
                 btn.innerText = "消灯:OFF";
                 showToast("画面の消灯防止：OFF");
             }
@@ -374,7 +376,7 @@
             return `${startStr}〜${endStr}`;
         }
 
-        // --- 上部の個別ボタン（オス・メス・♂＆♀）のカウント処理 ---
+        // --- 個別ボタン（オス・メス・♂＆♀）のカウント処理 ---
         function incrementCategory(category) {
             if (isNaN(counts[category])) counts[category] = 0;
             counts[category]++;
@@ -455,16 +457,17 @@
             const a = Number(counts.any) || 0;
             const total = m + f + o + a;
 
-            document.getElementById('maleCountBadge').innerText = m;
-            document.getElementById('femaleCountBadge').innerText = f;
-            document.getElementById('otherCountBadge').innerText = o;
+            // 3桁のデジタル風表示 (例: 003)
+            document.getElementById('maleCountBadge').innerText = String(m).padStart(3, '0');
+            document.getElementById('femaleCountBadge').innerText = String(f).padStart(3, '0');
+            document.getElementById('otherCountBadge').innerText = String(o).padStart(3, '0');
 
             document.getElementById('subMaleNum').innerText = m;
             document.getElementById('subFemaleNum').innerText = f;
             document.getElementById('subOtherNum').innerText = o;
 
             document.getElementById('totalCatchDisplay').innerText = total;
-            document.getElementById('giantCountNumber').innerText = a;
+            document.getElementById('giantCountNumber').innerText = String(a).padStart(3, '0');
 
             document.getElementById('undoBtn').disabled = actionHistory.length === 0;
             calculateCatchRate();
@@ -573,7 +576,7 @@
                 container.innerHTML = history.map(item => {
                     let hourlyHtml = '';
                     if (item.hourlyCounts && Object.keys(item.hourlyCounts).length > 0) {
-                        hourlyHtml = `<div class="mt-2 pt-2 border-t border-slate-700/60 space-y-1">` +
+                        hourlyHtml = `<div class="mt-2 pt-2 border-t border-slate-800 space-y-1">` +
                             Object.keys(item.hourlyCounts).sort().map(hourKey => {
                                 const hc = item.hourlyCounts[hourKey];
                                 const hTotal = (Number(hc.male) || 0) + (Number(hc.female) || 0) + (Number(hc.other) || 0) + (Number(hc.any) || 0);
@@ -590,15 +593,15 @@
                     const a = Number(item.counts.any) || 0;
 
                     return `
-                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs space-y-1">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
                             <div class="flex justify-between font-bold text-slate-200">
                                 <span class="text-emerald-400">${item.date}</span>
                                 <span>計 ${item.total} 匹 (${item.hourlyRate} 匹/h)</span>
                             </div>
                             <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}</div>
-                            <div class="flex space-x-2 text-slate-300 pt-1 border-t border-slate-700">
-                                <span class="text-blue-400">♂ ${m}</span>
-                                <span class="text-pink-400">♀ ${f}</span>
+                            <div class="flex space-x-2 text-slate-300 pt-1 border-t border-slate-800">
+                                <span class="text-cyan-400">♂ ${m}</span>
+                                <span class="text-rose-400">♀ ${f}</span>
                                 <span class="text-emerald-400">♂&♀ ${o}</span>
                                 <span class="text-amber-400">なんでも ${a}</span>
                             </div>
