@@ -1,1 +1,258 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>順番決めルーレット（サウンド付き）</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes pulse-fast {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .roulette-anim {
+            animation: pulse-fast 0.15s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-indigo-950 to-purple-950 min-h-screen py-8 px-4 text-gray-100">
+    <div class="max-w-xl mx-auto bg-white/10 backdrop-blur-lg rounded-2xl shadow-2xl p-6 md:p-8 border border-white/20">
+        <h1 class="text-2xl font-bold text-center mb-6 text-amber-400 flex items-center justify-center gap-2">
+            🎰 順番決めルーレット & サウンド
+        </h1>
 
+        <!-- 入力エリア -->
+        <div class="mb-6">
+            <div class="flex justify-between items-center mb-2">
+                <label for="namesInput" class="block font-semibold text-gray-300 text-sm">参加者名（1行に1人、またはカンマ区切り）</label>
+                <div class="space-x-1.5">
+                    <button onclick="loadPreset('team')" class="text-xs bg-indigo-800/60 hover:bg-indigo-700 text-indigo-200 px-2.5 py-1 rounded transition">チーム例</button>
+                    <button onclick="loadPreset('num')" class="text-xs bg-purple-800/60 hover:bg-purple-700 text-purple-200 px-2.5 py-1 rounded transition">1〜10</button>
+                    <button onclick="clearInput()" class="text-xs bg-gray-700 hover:bg-gray-600 text-gray-300 px-2 py-1 rounded transition">クリア</button>
+                </div>
+            </div>
+            <textarea id="namesInput" rows="4" class="w-full p-3 border border-indigo-500/30 rounded-xl focus:ring-2 focus:ring-amber-400 focus:border-amber-400 outline-none transition bg-black/40 font-mono text-sm text-white placeholder-gray-500" placeholder="Aさん&#10;Bさん&#10;Cさん&#10;Dさん"></textarea>
+        </div>
+
+        <!-- ルーレット演出中の表示エリア -->
+        <div id="rouletteDisplay" class="mb-6 hidden bg-black/60 border border-amber-500/50 rounded-2xl p-6 text-center shadow-inner relative overflow-hidden roulette-anim">
+            <div class="text-xs text-amber-400 mb-1 uppercase tracking-widest font-bold">Roulette Spinning...</div>
+            <div id="rouletteSlot" class="text-4xl md:text-5xl font-black tracking-wide py-3 text-amber-300 font-mono drop-shadow-[0_0_10px_rgba(251,191,36,0.5)]">
+                シャッフル中...
+            </div>
+            <div class="text-xs text-indigo-300 mt-1">ドキドキの抽選中！</div>
+        </div>
+
+        <!-- 抽選スタートボタン -->
+        <button id="drawBtn" onclick="startRoulette()" class="w-full bg-gradient-to-r from-amber-500 to-orange-600 hover:from-amber-600 hover:to-orange-700 text-gray-950 font-black py-4 px-6 rounded-xl shadow-lg hover:shadow-amber-500/40 transition transform active:scale-95 text-xl cursor-pointer tracking-wider">
+            🎲 ルーレットスタート！
+        </button>
+
+        <!-- 結果表示エリア -->
+        <div id="resultContainer" class="mt-8 hidden">
+            <h2 class="text-lg font-bold text-gray-200 mb-4 flex items-center justify-between border-b border-white/10 pb-2">
+                <span class="flex items-center gap-1.5 text-amber-400">🏆 決定した順番</span>
+                <button onclick="copyResults()" class="text-xs bg-white/10 hover:bg-white/20 text-gray-200 px-3 py-1.5 rounded-lg font-normal transition flex items-center gap-1 cursor-pointer">
+                    📋 結果をコピー
+                </button>
+            </h2>
+            <div id="resultList" class="space-y-2.5">
+                <!-- JavaScriptで結果が挿入されます -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Web Audio APIによるサウンド制御
+        let audioCtx = null;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // ルーレット中のピピッという電子音
+        function playTickSound() {
+            try {
+                initAudio();
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {
+                // 音声再生エラー抑制
+            }
+        }
+
+        // 決定時のファンファーレ風サウンド
+        function playFanfareSound() {
+            try {
+                initAudio();
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // ド, ミ, ソ, 高いド
+                notes.forEach((freq, index) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(freq, audioCtx.currentTime + index * 0.12);
+                    gain.gain.setValueAtTime(0.1, audioCtx.currentTime + index * 0.12);
+                    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + index * 0.12 + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(audioCtx.currentTime + index * 0.12);
+                    osc.stop(audioCtx.currentTime + index * 0.12 + 0.3);
+                });
+            } catch (e) {
+                // 音声再生エラー抑制
+            }
+        }
+
+        // プリセットデータの読み込み
+        function loadPreset(type) {
+            const input = document.getElementById('namesInput');
+            if (type === 'team') {
+                input.value = "Aチーム\nBチーム\nCチーム\nDチーム\nEチーム";
+            } else if (type === 'num') {
+                input.value = Array.from({length: 10}, (_, i) => `${i + 1}番`).join('\n');
+            }
+        }
+
+        // 入力クリア
+        function clearInput() {
+            document.getElementById('namesInput').value = '';
+            document.getElementById('resultContainer').classList.add('hidden');
+            document.getElementById('rouletteDisplay').classList.add('hidden');
+        }
+
+        // 抽選メイン処理
+        function startRoulette() {
+            const inputVal = document.getElementById('namesInput').value.trim();
+            
+            let names = inputVal
+                .split(/[\n,]/)
+                .map(name => name.trim())
+                .filter(name => name.length > 0);
+
+            if (names.length === 0) {
+                alert('参加者名を入力してください！');
+                return;
+            }
+
+            const drawBtn = document.getElementById('drawBtn');
+            const rouletteDisplay = document.getElementById('rouletteDisplay');
+            const rouletteSlot = document.getElementById('rouletteSlot');
+            const resultContainer = document.getElementById('resultContainer');
+
+            drawBtn.disabled = true;
+            drawBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            resultContainer.classList.add('hidden');
+            rouletteDisplay.classList.remove('hidden');
+
+            // 最終的な順番をランダムにシャッフル
+            let shuffledNames = [...names];
+            for (let i = shuffledNames.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [shuffledNames[i], shuffledNames[j]] = [shuffledNames[j], shuffledNames[i]];
+            }
+
+            // スロット風アニメーション（徐々にスピードが落ちる演出）
+            let counter = 0;
+            const totalSteps = 22; 
+            let currentInterval = 60;
+
+            function runStep() {
+                const randomName = names[Math.floor(Math.random() * names.length)];
+                rouletteSlot.textContent = randomName;
+                playTickSound(); // 音を鳴らす
+                counter++;
+
+                if (counter < totalSteps) {
+                    // 後半になるにつれてスピードを少し遅くする（演出感アップ）
+                    if (counter > 15) currentInterval += 40;
+                    setTimeout(runStep, currentInterval);
+                } else {
+                    // 終了時の処理
+                    playFanfareSound(); // ファンファーレを鳴らす
+                    showResults(shuffledNames);
+
+                    drawBtn.disabled = false;
+                    drawBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                    rouletteDisplay.classList.add('hidden');
+                }
+            }
+
+            runStep();
+        }
+
+        // 結果を描画する関数
+        function showResults(names) {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultList = document.getElementById('resultList');
+            resultList.innerHTML = '';
+
+            names.forEach((name, index) => {
+                const rank = index + 1;
+                const div = document.createElement('div');
+                
+                let rankBadgeClass = "bg-gray-800 text-gray-300 border border-gray-700";
+                let cardBgClass = "bg-white/5 border-white/10 text-gray-200";
+                
+                if (rank === 1) {
+                    rankBadgeClass = "bg-amber-400 text-gray-950 font-black shadow-md shadow-amber-400/30";
+                    cardBgClass = "bg-amber-500/10 border-amber-500/40 text-amber-200 font-bold";
+                } else if (rank === 2) {
+                    rankBadgeClass = "bg-slate-300 text-slate-900 font-bold";
+                    cardBgClass = "bg-slate-500/10 border-slate-400/30 text-slate-200";
+                } else if (rank === 3) {
+                    rankBadgeClass = "bg-amber-700 text-amber-100 font-bold";
+                    cardBgClass = "bg-orange-900/20 border-orange-700/30 text-orange-200";
+                }
+
+                div.className = `flex items-center justify-between p-3.5 rounded-xl border ${cardBgClass} shadow-sm transition transform hover:scale-[1.01]`;
+                div.innerHTML = `
+                    <div class="flex items-center gap-3">
+                        <span class="w-8 h-8 flex items-center justify-center rounded-full text-sm ${rankBadgeClass}">${rank}</span>
+                        <span class="text-base">${escapeHTML(name)}</span>
+                    </div>
+                    <span class="text-xs text-gray-400 font-mono">#${rank}</span>
+                `;
+                resultList.appendChild(div);
+            });
+
+            resultContainer.classList.remove('hidden');
+            resultContainer.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+
+        function escapeHTML(str) {
+            return str.replace(/[&<>'"]/g, 
+                tag => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[tag] || tag)
+            );
+        }
+
+        function copyResults() {
+            const rows = document.querySelectorAll('#resultList > div');
+            let text = "【 順番決め抽選結果 】\n";
+            rows.forEach((row, idx) => {
+                const name = row.querySelector('.text-base').textContent;
+                text += `${idx + 1}位: ${name}\n`;
+            });
+
+            navigator.clipboard.writeText(text).then(() => {
+                alert('結果をクリップボードにコピーしました！');
+            }).catch(err => {
+                console.error('コピーに失敗しました', err);
+            });
+        }
+    </script>
+</body>
+</html>
