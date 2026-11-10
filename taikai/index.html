@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴ釣り大会 カウンター（同期ボタン付き）</title>
+    <title>タナゴ釣り大会 カウンター（スリープ切替付き）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
@@ -11,41 +11,55 @@
         .btn-active:active { transform: scale(0.96); }
     </style>
 </head>
-<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white">
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white relative">
 
-    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-3 py-3 sticky top-0 z-20 flex items-center justify-between">
+    <!-- 画面ロック中のオーバーレイ -->
+    <div id="screenLockOverlay" class="fixed inset-0 bg-slate-950/90 z-50 flex flex-col items-center justify-center hidden backdrop-blur-sm p-6 text-center">
+        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl shadow-2xl max-w-xs w-full space-y-4">
+            <div class="text-4xl">🔒</div>
+            <h2 class="font-bold text-base text-slate-100">画面ロック中</h2>
+            <p class="text-xs text-slate-400">誤操作防止のためタッチが無効化されています。</p>
+            <button onclick="toggleScreenLock()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm shadow">
+                タップして解除
+            </button>
+        </div>
+    </div>
+
+    <header class="bg-slate-900 border-b border-slate-800 px-3 py-3 sticky top-0 z-20 flex items-center justify-between">
         <div class="flex items-center space-x-2">
-            <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-black text-xs">大会</div>
+            <div id="wakeLockBadge" class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">常時</div>
             <div>
                 <h1 class="font-bold text-sm leading-tight tracking-wide">タナゴ釣果カウンター</h1>
-                <p id="terminalStatus" class="text-[10px] text-emerald-400">端末固定モード</p>
+                <p id="wakeLockStatus" class="text-[10px] text-emerald-400">スリープ防止: 有効</p>
             </div>
         </div>
-        <div class="flex items-center space-x-1.5">
-            <button onclick="openRankingModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-600 text-white text-[11px] font-bold shadow">🏆 順位速報</button>
+        <div class="flex items-center space-x-1">
+            <button onclick="toggleWakeLock()" id="wakeLockToggleBtn" class="px-2 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[10px] font-bold shadow">💡常時点灯ON</button>
+            <button onclick="toggleScreenLock()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[10px] font-bold shadow">🔒</button>
+            <button onclick="openRankingModal()" class="px-2 py-1.5 rounded-lg bg-amber-600 text-white text-[10px] font-bold shadow">🏆</button>
         </div>
     </header>
 
     <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
         
         <!-- 初回登録画面 -->
-        <section id="setupSection" class="bg-slate-800 rounded-2xl p-6 border border-slate-700/80 shadow-lg my-auto hidden">
+        <section id="setupSection" class="bg-slate-900 rounded-2xl p-6 border border-slate-800 shadow-lg my-auto hidden">
             <h2 class="font-bold text-base text-slate-100 mb-2">📱 端末の担当選手登録</h2>
             <p class="text-xs text-slate-400 mb-4">このスマートフォンで集計する選手名を入力してください。<br><span class="text-amber-400 font-bold">※「管理者」または「本部」と入力すると、初期化機能が有効になります。</span></p>
             <div class="space-y-3">
-                <input type="text" id="terminalParticipantInput" placeholder="例: 選手A / 管理者 / 本部" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                <input type="text" id="terminalParticipantInput" placeholder="例: 選手A / 管理者 / 本部" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
                 <button onclick="registerTerminalParticipant()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm shadow">この名前で決定して開始</button>
             </div>
         </section>
 
         <!-- メインカウント画面 -->
         <div id="mainSection" class="flex flex-col justify-between flex-grow gap-4">
-            <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg flex items-center justify-between">
+            <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-lg flex items-center justify-between">
                 <div>
                     <span class="text-[10px] text-slate-400 uppercase font-bold block">登録名（この端末）</span>
                     <span id="assignedParticipantName" class="text-base font-extrabold text-emerald-300">-</span>
                 </div>
-                <button onclick="changeAssignedParticipant()" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold">名前変更</button>
+                <button onclick="changeAssignedParticipant()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold">名前変更</button>
             </section>
 
             <section class="flex flex-col items-center my-auto w-full space-y-3">
@@ -56,15 +70,15 @@
 
                 <!-- 3つの独立したカウントボタン -->
                 <div class="grid grid-cols-3 gap-2 w-full">
-                    <button onclick="incrementGender('male')" class="btn-active bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/50 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                    <button onclick="incrementGender('male')" class="btn-active bg-blue-950/50 hover:bg-blue-900/50 border border-blue-800/60 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
                         <span class="text-xs font-bold text-blue-300">♂ オス追加</span>
                         <span id="activeMaleCount" class="text-3xl font-black text-blue-400 mt-1">0</span>
                     </button>
-                    <button onclick="incrementGender('female')" class="btn-active bg-pink-600/30 hover:bg-pink-600/50 border border-pink-500/50 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                    <button onclick="incrementGender('female')" class="btn-active bg-pink-950/50 hover:bg-pink-900/50 border border-pink-800/60 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
                         <span class="text-xs font-bold text-pink-300">♀ メス追加</span>
                         <span id="activeFemaleCount" class="text-3xl font-black text-pink-400 mt-1">0</span>
                     </button>
-                    <button onclick="incrementGender('unknown')" class="btn-active bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                    <button onclick="incrementGender('unknown')" class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
                         <span class="text-xs font-bold text-slate-300">雑魚</span>
                         <span id="activeUnknownCount" class="text-3xl font-black text-slate-100 mt-1">0</span>
                     </button>
@@ -72,40 +86,40 @@
 
                 <!-- マイナス調整ボタン -->
                 <div class="flex items-center justify-center space-x-2 w-full pt-2">
-                    <button onclick="decrementGender('male')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-blue-300 py-2.5 rounded-xl text-xs font-bold">♂ -1</button>
-                    <button onclick="decrementGender('female')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-pink-300 py-2.5 rounded-xl text-xs font-bold">♀ -1</button>
-                    <button onclick="decrementGender('unknown')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold">雑魚 -1</button>
+                    <button onclick="decrementGender('male')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-blue-300 py-2.5 rounded-xl text-xs font-bold">♂ -1</button>
+                    <button onclick="decrementGender('female')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-pink-300 py-2.5 rounded-xl text-xs font-bold">♀ -1</button>
+                    <button onclick="decrementGender('unknown')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-bold">雑魚 -1</button>
                 </div>
             </section>
 
-            <!-- アクションボタンエリア（ランキング、同期、管理者用初期化） -->
+            <!-- アクションボタンエリア -->
             <section class="space-y-2 mt-2">
                 <div class="grid grid-cols-2 gap-3">
                     <button onclick="openRankingModal()" class="btn-active bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex items-center justify-center space-x-1"><span>🏆 ランキング</span></button>
-                    <button onclick="syncWithCloud()" class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1"><span>🔄 最新に同期</span></button>
+                    <button onclick="syncWithCloud()" class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 text-emerald-400 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1"><span>🔄 最新に同期</span></button>
                 </div>
                 <!-- 管理者用初期化ボタン（管理者・本部でのみ表示） -->
-                <button id="adminClearBtn" onclick="clearCloudSpreadsheet()" class="w-full btn-active bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700/60 text-rose-300 font-bold py-3 px-4 rounded-xl text-sm shadow hidden flex items-center justify-center space-x-1"><span>🗑️ スプレッドシート全データ初期化</span></button>
+                <button id="adminClearBtn" onclick="clearCloudSpreadsheet()" class="w-full btn-active bg-rose-950/60 hover:bg-rose-900/60 border border-rose-900/60 text-rose-300 font-bold py-3 px-4 rounded-xl text-sm shadow hidden flex items-center justify-center space-x-1"><span>🗑️ スプレッドシート全データ初期化</span></button>
             </section>
         </div>
     </main>
 
     <!-- ランキング速報モーダル -->
-    <div id="rankingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+    <div id="rankingModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
                 <h2 class="font-bold text-slate-100 text-sm">🏆 リアルタイム釣果ランキング</h2>
                 <button onclick="closeRankingModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
             </div>
             <div id="rankingList" class="p-4 overflow-y-auto space-y-2.5 flex-grow"></div>
-            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
+            <div class="p-4 border-t border-slate-800 bg-slate-950/50 flex justify-between items-center">
                 <button onclick="syncWithCloud()" class="text-xs font-semibold text-emerald-400">🔄 最新に更新</button>
-                <button onclick="closeRankingModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
+                <button onclick="closeRankingModal()" class="bg-slate-800 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
             </div>
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-800 text-emerald-400 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-emerald-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
@@ -114,13 +128,76 @@
 
         let assignedName = localStorage.getItem('tanago_assigned_name') || "";
         let tournamentData = { participants: [] };
+        let wakeLock = null;
+        let isWakeLockEnabled = true; // デフォルトで有効
 
         window.onload = () => {
             checkTerminalSetup();
+            requestWakeLock();
         };
+
+        // スリープ防止のON/OFF切り替え
+        async function toggleWakeLock() {
+            if (isWakeLockEnabled) {
+                // OFFにする
+                if (wakeLock !== null) {
+                    try {
+                        await wakeLock.release();
+                        wakeLock = null;
+                    } catch (err) {
+                        console.error(err);
+                    }
+                }
+                isWakeLockEnabled = false;
+                document.getElementById('wakeLockStatus').innerText = "スリープ防止: 停止中";
+                document.getElementById('wakeLockToggleBtn').innerText = "💡常時点灯OFF";
+                document.getElementById('wakeLockToggleBtn').className = "px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold shadow";
+                document.getElementById('wakeLockBadge').className = "bg-slate-700 text-slate-300 p-1.5 rounded-lg font-black text-xs";
+                showToast('スリープ防止をOFFにしました');
+            } else {
+                // ONにする
+                isWakeLockEnabled = true;
+                await requestWakeLock();
+                document.getElementById('wakeLockToggleBtn').innerText = "💡常時点灯ON";
+                document.getElementById('wakeLockToggleBtn').className = "px-2 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[10px] font-bold shadow";
+                document.getElementById('wakeLockBadge').className = "bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs";
+                showToast('スリープ防止をONにしました');
+            }
+        }
+
+        async function requestWakeLock() {
+            if (!isWakeLockEnabled) return;
+            if ('wakeLock' in navigator) {
+                try {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    document.getElementById('wakeLockStatus').innerText = "スリープ防止: 有効";
+                    
+                    document.addEventListener('visibilitychange', async () => {
+                        if (isWakeLockEnabled && wakeLock !== null && document.visibilityState === 'visible') {
+                            wakeLock = await navigator.wakeLock.request('screen');
+                        }
+                    });
+                } catch (err) {
+                    console.error(`${err.name}, ${err.message}`);
+                    document.getElementById('wakeLockStatus').innerText = "スリープ防止: 非対応/解除";
+                }
+            } else {
+                document.getElementById('wakeLockStatus').innerText = "スリープ防止: 非対応ブラウザ";
+            }
+        }
 
         function isAdmin() {
             return assignedName === "管理者" || assignedName === "本部";
+        }
+
+        function toggleScreenLock() {
+            const overlay = document.getElementById('screenLockOverlay');
+            overlay.classList.toggle('hidden');
+            if (!overlay.classList.contains('hidden')) {
+                showToast('画面をロックしました');
+            } else {
+                showToast('ロックを解除しました');
+            }
         }
 
         async function checkTerminalSetup() {
@@ -132,7 +209,6 @@
                 document.getElementById('mainSection').classList.remove('hidden');
                 document.getElementById('assignedParticipantName').innerText = assignedName;
 
-                // 管理者の場合のみ初期化ボタンを表示
                 const clearBtn = document.getElementById('adminClearBtn');
                 if (isAdmin()) {
                     clearBtn.classList.remove('hidden');
@@ -188,7 +264,7 @@
         }
 
         async function syncWithCloud() {
-            showToast('クラウドから同期中...');
+            showToast('同期中...');
             try {
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
@@ -200,10 +276,10 @@
                 }
                 ensureAssignedInCloud();
                 updateUI();
-                showToast('同期完了しました');
+                showToast('同期完了');
             } catch (err) {
                 console.error("同期エラー:", err);
-                showToast('同期に失敗しました');
+                showToast('同期失敗');
             }
         }
 
@@ -225,7 +301,7 @@
             p.counts[gender]++;
             saveToCloud();
             updateUI();
-            if ('vibrate' in navigator) navigator.vibrate(40);
+            if ('vibrate' in navigator) navigator.vibrate(30);
         }
 
         function decrementGender(gender) {
@@ -234,7 +310,7 @@
                 p.counts[gender]--;
                 saveToCloud();
                 updateUI();
-                if ('vibrate' in navigator) navigator.vibrate(40);
+                if ('vibrate' in navigator) navigator.vibrate(30);
             }
         }
 
@@ -258,13 +334,13 @@
                 .sort((a, b) => getTotalCount(b) - getTotalCount(a));
 
             if (sorted.length === 0) {
-                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">ランキングデータがありません</div>`;
+                container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">データがありません</div>`;
             } else {
                 container.innerHTML = sorted.map((p, index) => {
                     const total = getTotalCount(p);
                     const rankClass = index === 0 ? 'text-amber-400 font-black' : index === 1 ? 'text-slate-300 font-bold' : index === 2 ? 'text-amber-700 font-bold' : 'text-slate-400';
                     return `
-                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 flex items-center justify-between text-xs">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
                             <div class="flex items-center space-x-3">
                                 <span class="text-base w-6 text-center ${rankClass}">#${index + 1}</span>
                                 <div>
@@ -299,9 +375,9 @@
                 tournamentData.participants = [];
                 ensureAssignedInCloud();
                 updateUI();
-                showToast('スプレッドシートを初期化しました');
+                showToast('初期化しました');
             } catch (err) {
-                showToast('初期化に失敗しました');
+                showToast('初期化失敗');
             }
         }
 
@@ -310,7 +386,7 @@
             document.getElementById('toastMsg').innerText = msg;
             t.classList.remove('opacity-0');
             t.classList.add('opacity-100');
-            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 1500);
         }
     </script>
 </body>
