@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴ釣り大会 リアルタイム集計（GAS連携）</title>
+    <title>タナゴ釣り大会 カウンター（同期ボタン付き）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
@@ -17,78 +17,78 @@
         <div class="flex items-center space-x-2">
             <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-black text-xs">大会</div>
             <div>
-                <h1 class="font-bold text-sm leading-tight tracking-wide">GASリアルタイム集計</h1>
-                <p class="text-[10px] text-slate-400">Spreadsheet Connected</p>
+                <h1 class="font-bold text-sm leading-tight tracking-wide">タナゴ釣果カウンター</h1>
+                <p id="terminalStatus" class="text-[10px] text-emerald-400">端末固定モード</p>
             </div>
         </div>
         <div class="flex items-center space-x-1.5">
-            <button onclick="openParticipantModal()" class="px-2.5 py-1.5 rounded-lg bg-emerald-600 text-white text-[11px] font-bold shadow">👥 選手管理</button>
             <button onclick="openRankingModal()" class="px-2.5 py-1.5 rounded-lg bg-amber-600 text-white text-[11px] font-bold shadow">🏆 順位速報</button>
         </div>
     </header>
 
     <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
-        <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg">
-            <div class="flex items-center justify-between bg-slate-900/60 p-3 rounded-xl border border-slate-700/40">
+        
+        <!-- 初回登録画面 -->
+        <section id="setupSection" class="bg-slate-800 rounded-2xl p-6 border border-slate-700/80 shadow-lg my-auto hidden">
+            <h2 class="font-bold text-base text-slate-100 mb-2">📱 端末の担当選手登録</h2>
+            <p class="text-xs text-slate-400 mb-4">このスマートフォンで集計する選手名を入力してください。<br><span class="text-amber-400 font-bold">※「管理者」または「本部」と入力すると、初期化機能が有効になります。</span></p>
+            <div class="space-y-3">
+                <input type="text" id="terminalParticipantInput" placeholder="例: 選手A / 管理者 / 本部" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
+                <button onclick="registerTerminalParticipant()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm shadow">この名前で決定して開始</button>
+            </div>
+        </section>
+
+        <!-- メインカウント画面 -->
+        <div id="mainSection" class="flex flex-col justify-between flex-grow gap-4">
+            <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg flex items-center justify-between">
                 <div>
-                    <span class="text-[10px] text-slate-400 uppercase font-bold block">集計中の選手</span>
-                    <span id="currentParticipantName" class="text-base font-extrabold text-emerald-300">読み込み中...</span>
+                    <span class="text-[10px] text-slate-400 uppercase font-bold block">登録名（この端末）</span>
+                    <span id="assignedParticipantName" class="text-base font-extrabold text-emerald-300">-</span>
                 </div>
-                <button onclick="openParticipantModal()" class="text-xs bg-slate-700 hover:bg-slate-600 text-slate-200 px-3 py-1.5 rounded-lg font-bold">選手変更 ▾</button>
-            </div>
-        </section>
+                <button onclick="changeAssignedParticipant()" class="text-[11px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold">名前変更</button>
+            </section>
 
-        <section class="flex flex-col items-center my-auto w-full">
-            <div class="flex w-full bg-slate-800 p-1 rounded-xl mb-4 border border-slate-700 space-x-1 shadow-inner">
-                <button onclick="setTargetGender('male')" id="genderBtnMale" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-blue-600/30 text-blue-300 border border-blue-500/50">
-                    <span>♂ オス</span><span id="maleCountBadge" class="bg-blue-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
-                </button>
-                <button onclick="setTargetGender('female')" id="genderBtnFemale" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400">
-                    <span>♀ メス</span><span id="femaleCountBadge" class="bg-pink-500 text-slate-900 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
-                </button>
-                <button onclick="setTargetGender('unknown')" id="genderBtnUnknown" class="flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400">
-                    <span>? 不明</span><span id="unknownCountBadge" class="bg-slate-600 text-slate-100 px-1.5 py-0.2 rounded-full text-[10px] font-extrabold ml-1">0</span>
-                </button>
-            </div>
-
-            <div class="relative w-full max-w-[260px] aspect-square my-2 flex items-center justify-center">
-                <button onclick="incrementActiveParticipant()" class="btn-active w-full h-full rounded-full bg-gradient-to-br from-emerald-500 to-teal-700 text-slate-950 font-black shadow-2xl border-4 border-emerald-300/40 flex flex-col items-center justify-center relative active:brightness-110 select-none">
-                    <span class="text-[11px] uppercase tracking-widest font-bold text-emerald-950/70 mb-1" id="activeGenderLabel">♂ オスをカウント</span>
-                    <span id="giantCountNumber" class="text-7xl font-black tracking-tight drop-shadow-md">0</span>
-                    <span class="mt-2 text-xs font-bold bg-slate-950/20 text-slate-900 px-3 py-1 rounded-full">TAP TO COUNT</span>
-                </button>
-            </div>
-
-            <div class="flex items-center justify-center space-x-3 mt-4 w-full">
-                <button onclick="decrementActiveParticipant()" class="btn-active flex-1 max-w-[150px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">➖ 1減らす (-1)</button>
-            </div>
-        </section>
-
-        <section class="grid grid-cols-2 gap-3 mt-2">
-            <button onclick="openRankingModal()" class="btn-active bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex items-center justify-center space-x-1"><span>🏆 ランキング確認</span></button>
-            <button onclick="syncWithCloud()" class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1"><span>🔄 データを同期</span></button>
-        </section>
-    </main>
-
-    <!-- 選手管理モーダル -->
-    <div id="participantModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
-                <h2 class="font-bold text-slate-100 text-sm">参加者（選手）の管理</h2>
-                <button onclick="closeParticipantModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
-            </div>
-            <div class="p-4 space-y-3 overflow-y-auto flex-grow">
-                <div class="flex space-x-2">
-                    <input type="text" id="newParticipantInput" placeholder="選手名またはゼッケン番号..." class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-emerald-500 flex-grow">
-                    <button onclick="addParticipant()" class="bg-emerald-600 text-white px-4 py-2 rounded-xl text-xs font-bold">追加</button>
+            <section class="flex flex-col items-center my-auto w-full space-y-3">
+                <div class="text-center">
+                    <span class="text-xs text-slate-400">総釣果</span>
+                    <div id="activeTotalDisplay" class="text-6xl font-black text-emerald-400">0 <span class="text-sm font-normal text-slate-400">匹</span></div>
                 </div>
-                <div id="participantList" class="space-y-2 mt-3"></div>
-            </div>
-            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-end">
-                <button onclick="closeParticipantModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">完了</button>
-            </div>
+
+                <!-- 3つの独立したカウントボタン -->
+                <div class="grid grid-cols-3 gap-2 w-full">
+                    <button onclick="incrementGender('male')" class="btn-active bg-blue-600/30 hover:bg-blue-600/50 border border-blue-500/50 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                        <span class="text-xs font-bold text-blue-300">♂ オス追加</span>
+                        <span id="activeMaleCount" class="text-3xl font-black text-blue-400 mt-1">0</span>
+                    </button>
+                    <button onclick="incrementGender('female')" class="btn-active bg-pink-600/30 hover:bg-pink-600/50 border border-pink-500/50 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                        <span class="text-xs font-bold text-pink-300">♀ メス追加</span>
+                        <span id="activeFemaleCount" class="text-3xl font-black text-pink-400 mt-1">0</span>
+                    </button>
+                    <button onclick="incrementGender('unknown')" class="btn-active bg-slate-700/50 hover:bg-slate-700 border border-slate-600 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
+                        <span class="text-xs font-bold text-slate-300">雑魚</span>
+                        <span id="activeUnknownCount" class="text-3xl font-black text-slate-100 mt-1">0</span>
+                    </button>
+                </div>
+
+                <!-- マイナス調整ボタン -->
+                <div class="flex items-center justify-center space-x-2 w-full pt-2">
+                    <button onclick="decrementGender('male')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-blue-300 py-2.5 rounded-xl text-xs font-bold">♂ -1</button>
+                    <button onclick="decrementGender('female')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-pink-300 py-2.5 rounded-xl text-xs font-bold">♀ -1</button>
+                    <button onclick="decrementGender('unknown')" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 rounded-xl text-xs font-bold">雑魚 -1</button>
+                </div>
+            </section>
+
+            <!-- アクションボタンエリア（ランキング、同期、管理者用初期化） -->
+            <section class="space-y-2 mt-2">
+                <div class="grid grid-cols-2 gap-3">
+                    <button onclick="openRankingModal()" class="btn-active bg-amber-600 hover:bg-amber-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg flex items-center justify-center space-x-1"><span>🏆 ランキング</span></button>
+                    <button onclick="syncWithCloud()" class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-emerald-400 font-bold py-3 px-4 rounded-xl text-sm shadow flex items-center justify-center space-x-1"><span>🔄 最新に同期</span></button>
+                </div>
+                <!-- 管理者用初期化ボタン（管理者・本部でのみ表示） -->
+                <button id="adminClearBtn" onclick="clearCloudSpreadsheet()" class="w-full btn-active bg-rose-900/40 hover:bg-rose-900/60 border border-rose-700/60 text-rose-300 font-bold py-3 px-4 rounded-xl text-sm shadow hidden flex items-center justify-center space-x-1"><span>🗑️ スプレッドシート全データ初期化</span></button>
+            </section>
         </div>
-    </div>
+    </main>
 
     <!-- ランキング速報モーダル -->
     <div id="rankingModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
@@ -110,35 +110,81 @@
     </div>
 
     <script>
-        // ★ テストツールで正常に動作したGASのウェブアプリURLをここに貼り付けてください
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIAIE6DiCkN09j6AYFrMuXedNaB3-t1iQ8W5gHT9coTQb29yGzLb0MwF__k6CxGNwZ/exec";
 
-        let tournamentData = {
-            participants: [
-                { id: 1, name: '選手 A', counts: { male: 0, female: 0, unknown: 0 } },
-                { id: 2, name: '選手 B', counts: { male: 0, female: 0, unknown: 0 } }
-            ],
-            activeId: 1
-        };
-
-        let currentTargetGender = 'male';
+        let assignedName = localStorage.getItem('tanago_assigned_name') || "";
+        let tournamentData = { participants: [] };
 
         window.onload = () => {
-            syncWithCloud();
+            checkTerminalSetup();
         };
 
-        function ensureActiveParticipant() {
-            if (tournamentData.participants.length > 0) {
-                if (!tournamentData.participants.some(p => p.id === tournamentData.activeId)) {
-                    tournamentData.activeId = tournamentData.participants[0].id;
-                }
+        function isAdmin() {
+            return assignedName === "管理者" || assignedName === "本部";
+        }
+
+        async function checkTerminalSetup() {
+            if (!assignedName) {
+                document.getElementById('setupSection').classList.remove('hidden');
+                document.getElementById('mainSection').classList.add('hidden');
             } else {
-                tournamentData.activeId = null;
+                document.getElementById('setupSection').classList.add('hidden');
+                document.getElementById('mainSection').classList.remove('hidden');
+                document.getElementById('assignedParticipantName').innerText = assignedName;
+
+                // 管理者の場合のみ初期化ボタンを表示
+                const clearBtn = document.getElementById('adminClearBtn');
+                if (isAdmin()) {
+                    clearBtn.classList.remove('hidden');
+                } else {
+                    clearBtn.classList.add('hidden');
+                }
+
+                await syncWithCloud();
             }
         }
 
-        function getActiveParticipant() {
-            return tournamentData.participants.find(p => p.id === tournamentData.activeId);
+        function registerTerminalParticipant() {
+            const input = document.getElementById('terminalParticipantInput');
+            const name = input.value.trim();
+            if (!name) {
+                showToast('名前を入力してください');
+                return;
+            }
+            assignedName = name;
+            localStorage.setItem('tanago_assigned_name', assignedName);
+            
+            ensureAssignedInCloud();
+            checkTerminalSetup();
+            showToast(`${assignedName} として登録しました`);
+        }
+
+        function changeAssignedParticipant() {
+            if (confirm("この端末の登録名を変更しますか？")) {
+                localStorage.removeItem('tanago_assigned_name');
+                assignedName = "";
+                checkTerminalSetup();
+            }
+        }
+
+        function ensureAssignedInCloud() {
+            let p = tournamentData.participants.find(item => item.name === assignedName);
+            if (!p) {
+                tournamentData.participants.push({
+                    name: assignedName,
+                    counts: { male: 0, female: 0, unknown: 0 }
+                });
+                saveToCloud();
+            }
+        }
+
+        function getMyParticipant() {
+            let p = tournamentData.participants.find(item => item.name === assignedName);
+            if (!p) {
+                p = { name: assignedName, counts: { male: 0, female: 0, unknown: 0 } };
+                tournamentData.participants.push(p);
+            }
+            return p;
         }
 
         async function syncWithCloud() {
@@ -146,18 +192,17 @@
             try {
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
-                if (data && Array.isArray(data) && data.length > 0) {
-                    tournamentData.participants = data.map((item, idx) => ({
-                        id: idx + 1,
+                if (data && Array.isArray(data)) {
+                    tournamentData.participants = data.map(item => ({
                         name: item.name,
                         counts: item.counts
                     }));
-                    ensureActiveParticipant();
                 }
+                ensureAssignedInCloud();
                 updateUI();
                 showToast('同期完了しました');
             } catch (err) {
-                console.error(err);
+                console.error("同期エラー:", err);
                 showToast('同期に失敗しました');
             }
         }
@@ -175,137 +220,42 @@
             }
         }
 
-        function incrementActiveParticipant() {
-            const p = getActiveParticipant();
-            if (!p) { showToast('選手を登録してください'); openParticipantModal(); return; }
-            p.counts[currentTargetGender]++;
+        function incrementGender(gender) {
+            const p = getMyParticipant();
+            p.counts[gender]++;
             saveToCloud();
             updateUI();
             if ('vibrate' in navigator) navigator.vibrate(40);
         }
 
-        function decrementActiveParticipant() {
-            const p = getActiveParticipant();
-            if (!p || p.counts[currentTargetGender] <= 0) return;
-            p.counts[currentTargetGender]--;
-            saveToCloud();
-            updateUI();
-            if ('vibrate' in navigator) navigator.vibrate(40);
-        }
-
-        function setTargetGender(g) {
-            currentTargetGender = g;
-            updateUI();
+        function decrementGender(gender) {
+            const p = getMyParticipant();
+            if (p.counts[gender] > 0) {
+                p.counts[gender]--;
+                saveToCloud();
+                updateUI();
+                if ('vibrate' in navigator) navigator.vibrate(40);
+            }
         }
 
         function getTotalCount(p) {
-            return p.counts.male + p.counts.female + p.counts.unknown;
+            return (p.counts.male || 0) + (p.counts.female || 0) + (p.counts.unknown || 0);
         }
 
         function updateUI() {
-            ensureActiveParticipant();
-            const p = getActiveParticipant();
-
-            if (p) {
-                document.getElementById('currentParticipantName').innerText = p.name;
-                document.getElementById('maleCountBadge').innerText = p.counts.male;
-                document.getElementById('femaleCountBadge').innerText = p.counts.female;
-                document.getElementById('unknownCountBadge').innerText = p.counts.unknown;
-                document.getElementById('giantCountNumber').innerText = p.counts[currentTargetGender];
-            } else {
-                document.getElementById('currentParticipantName').innerText = "選手がいません";
-                document.getElementById('maleCountBadge').innerText = 0;
-                document.getElementById('femaleCountBadge').innerText = 0;
-                document.getElementById('unknownCountBadge').innerText = 0;
-                document.getElementById('giantCountNumber').innerText = 0;
-            }
-
-            const gBtns = {
-                male: document.getElementById('genderBtnMale'),
-                female: document.getElementById('genderBtnFemale'),
-                unknown: document.getElementById('genderBtnUnknown')
-            };
-            Object.keys(gBtns).forEach(k => gBtns[k].className = "flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 text-slate-400");
-
-            if (currentTargetGender === 'male') {
-                gBtns.male.className = "flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-blue-600/30 text-blue-300 border border-blue-500/50";
-                document.getElementById('activeGenderLabel').innerText = "♂ オスをカウント";
-            } else if (currentTargetGender === 'female') {
-                gBtns.female.className = "flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-pink-600/30 text-pink-300 border border-pink-500/50";
-                document.getElementById('activeGenderLabel').innerText = "♀ メスをカウント";
-            } else {
-                gBtns.unknown.className = "flex-1 py-2 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-1 bg-amber-600/30 text-amber-300 border border-amber-500/50";
-                document.getElementById('activeGenderLabel').innerText = "? 不明をカウント";
-            }
-        }
-
-        function openParticipantModal() { renderParticipantList(); document.getElementById('participantModal').classList.remove('hidden'); }
-        function closeParticipantModal() { document.getElementById('participantModal').classList.add('hidden'); updateUI(); }
-
-        function renderParticipantList() {
-            const container = document.getElementById('participantList');
-            if (tournamentData.participants.length === 0) {
-                container.innerHTML = `<div class="text-center py-4 text-xs text-slate-500">登録されている選手がいません</div>`;
-                return;
-            }
-            container.innerHTML = tournamentData.participants.map(p => {
-                const total = getTotalCount(p);
-                const isActive = p.id === tournamentData.activeId;
-                return `
-                    <div class="bg-slate-800 border ${isActive ? 'border-emerald-500/80 bg-slate-800/90' : 'border-slate-700/60'} rounded-xl p-3 flex items-center justify-between text-xs">
-                        <div>
-                            <div class="font-bold text-slate-200 flex items-center space-x-2">
-                                <span>${p.name}</span>
-                                ${isActive ? '<span class="bg-emerald-500 text-slate-950 text-[10px] px-1.5 py-0.5 rounded font-black">集計中</span>' : ''}
-                            </div>
-                            <div class="text-slate-400 mt-0.5">合計: <b class="text-emerald-400">${total} 匹</b> (♂${p.counts.male}/♀${p.counts.female}/?${p.counts.unknown})</div>
-                        </div>
-                        <div class="space-x-1">
-                            ${!isActive ? `<button onclick="switchParticipant(${p.id})" class="bg-emerald-600 text-white px-2 py-1 rounded font-bold">選択</button>` : ''}
-                            <button onclick="deleteParticipant(${p.id})" class="bg-rose-600 text-white px-2 py-1 rounded font-bold">削除</button>
-                        </div>
-                    </div>
-                `;
-            }).join('');
-        }
-
-        function addParticipant() {
-            const input = document.getElementById('newParticipantInput');
-            const name = input.value.trim();
-            if (!name) { showToast('選手名を入力してください'); return; }
-            
-            const newId = Date.now();
-            tournamentData.participants.push({ id: newId, name: name, counts: { male: 0, female: 0, unknown: 0 } });
-            if (!tournamentData.activeId) tournamentData.activeId = newId;
-            
-            input.value = '';
-            saveToCloud();
-            renderParticipantList();
-            updateUI();
-            showToast(`${name} を追加しました`);
-        }
-
-        function switchParticipant(id) {
-            tournamentData.activeId = id;
-            renderParticipantList();
-            updateUI();
-            showToast('集計対象を変更しました');
-        }
-
-        function deleteParticipant(id) {
-            if (confirm('この選手を削除しますか？')) {
-                tournamentData.participants = tournamentData.participants.filter(p => p.id !== id);
-                ensureActiveParticipant();
-                saveToCloud();
-                renderParticipantList();
-                updateUI();
-            }
+            const p = getMyParticipant();
+            document.getElementById('activeMaleCount').innerText = p.counts.male;
+            document.getElementById('activeFemaleCount').innerText = p.counts.female;
+            document.getElementById('activeUnknownCount').innerText = p.counts.unknown;
+            document.getElementById('activeTotalDisplay').innerHTML = getTotalCount(p) + ` <span class="text-sm font-normal text-slate-400">匹</span>`;
         }
 
         async function openRankingModal() {
             await syncWithCloud();
             const container = document.getElementById('rankingList');
-            const sorted = [...tournamentData.participants].sort((a, b) => getTotalCount(b) - getTotalCount(a));
+            const sorted = [...tournamentData.participants]
+                .filter(p => p.name !== "管理者" && p.name !== "本部")
+                .sort((a, b) => getTotalCount(b) - getTotalCount(a));
 
             if (sorted.length === 0) {
                 container.innerHTML = `<div class="text-center py-8 text-xs text-slate-500">ランキングデータがありません</div>`;
@@ -319,7 +269,7 @@
                                 <span class="text-base w-6 text-center ${rankClass}">#${index + 1}</span>
                                 <div>
                                     <div class="font-bold text-slate-200 text-sm">${p.name}</div>
-                                    <div class="text-slate-400">♂ ${p.counts.male} / ♀ ${p.counts.female} / ? ${p.counts.unknown}</div>
+                                    <div class="text-slate-400">♂ ${p.counts.male} / ♀ ${p.counts.female} / 雑魚 ${p.counts.unknown}</div>
                                 </div>
                             </div>
                             <div class="text-right">
@@ -333,6 +283,28 @@
         }
         function closeRankingModal() { document.getElementById('rankingModal').classList.add('hidden'); }
 
+        async function clearCloudSpreadsheet() {
+            if (!isAdmin()) {
+                alert("権限がありません");
+                return;
+            }
+            if (!confirm("本当にスプレッドシートの全データを初期化しますか？")) return;
+            try {
+                await fetch(GAS_API_URL, {
+                    method: 'POST',
+                    mode: 'no-cors',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: "clear" })
+                });
+                tournamentData.participants = [];
+                ensureAssignedInCloud();
+                updateUI();
+                showToast('スプレッドシートを初期化しました');
+            } catch (err) {
+                showToast('初期化に失敗しました');
+            }
+        }
+
         function showToast(msg) {
             const t = document.getElementById('toast');
             document.getElementById('toastMsg').innerText = msg;
@@ -341,7 +313,5 @@
             setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
         }
     </script>
-</body>
-</html>
 </body>
 </html>
