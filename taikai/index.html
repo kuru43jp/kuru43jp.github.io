@@ -110,7 +110,7 @@
     </div>
 
     <script>
-        // ★ ここに先ほど取得したGASのウェブアプリURLを貼り付けてください
+        // ★ テストツールで正常に動作したGASのウェブアプリURLをここに貼り付けてください
         const GAS_API_URL = "https://script.google.com/macros/s/AKfycbxIAIE6DiCkN09j6AYFrMuXedNaB3-t1iQ8W5gHT9coTQb29yGzLb0MwF__k6CxGNwZ/exec";
 
         let tournamentData = {
@@ -124,7 +124,7 @@
         let currentTargetGender = 'male';
 
         window.onload = () => {
-            syncWithCloud(); // 起動時にスプレッドシートから最新データを取得
+            syncWithCloud();
         };
 
         function ensureActiveParticipant() {
@@ -141,14 +141,12 @@
             return tournamentData.participants.find(p => p.id === tournamentData.activeId);
         }
 
-        // --- GASとの通信（同期・保存） ---
         async function syncWithCloud() {
             showToast('クラウドから同期中...');
             try {
                 const response = await fetch(GAS_API_URL);
                 const data = await response.json();
-                if (data && data.length > 0) {
-                    // スプレッドシートのデータをアプリ用に変換
+                if (data && Array.isArray(data) && data.length > 0) {
                     tournamentData.participants = data.map((item, idx) => ({
                         id: idx + 1,
                         name: item.name,
@@ -177,7 +175,6 @@
             }
         }
 
-        // --- カウント操作 ---
         function incrementActiveParticipant() {
             const p = getActiveParticipant();
             if (!p) { showToast('選手を登録してください'); openParticipantModal(); return; }
@@ -242,7 +239,6 @@
             }
         }
 
-        // --- 選手管理 ---
         function openParticipantModal() { renderParticipantList(); document.getElementById('participantModal').classList.remove('hidden'); }
         function closeParticipantModal() { document.getElementById('participantModal').classList.add('hidden'); updateUI(); }
 
@@ -306,9 +302,8 @@
             }
         }
 
-        // --- ランキング速報 ---
         async function openRankingModal() {
-            await syncWithCloud(); // 開くときに最新をロード
+            await syncWithCloud();
             const container = document.getElementById('rankingList');
             const sorted = [...tournamentData.participants].sort((a, b) => getTotalCount(b) - getTotalCount(a));
 
@@ -346,5 +341,7 @@
             setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
         }
     </script>
+</body>
+</html>
 </body>
 </html>
