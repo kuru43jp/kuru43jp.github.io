@@ -1,1 +1,692 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>タナゴカウンター - 釣果記録アプリ</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            touch-action: manipulation;
+            -webkit-tap-highlight-color: transparent;
+        }
+        .btn-active:active {
+            transform: scale(0.96);
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.8; }
+            50% { transform: scale(1.03); opacity: 0.4; }
+            100% { transform: scale(0.95); opacity: 0.8; }
+        }
+        .pulse-effect {
+            animation: pulse-ring 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
 
+    <!-- Header Bar -->
+    <header class="bg-slate-800/90 backdrop-blur border-b border-slate-700 px-3 py-2.5 sticky top-0 z-20 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+            <div class="bg-emerald-500 text-slate-900 p-1.5 rounded-lg font-black text-xs">魚</div>
+            <div>
+                <h1 class="font-bold text-base leading-tight tracking-wide">タナゴカウンター</h1>
+                <p class="text-[10px] text-slate-400">Tanago Micro-Fishing Counter</p>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-1.5">
+            <button id="wakeLockToggleBtn" onclick="toggleWakeLock()" class="px-2 py-1.5 rounded-lg bg-emerald-600 text-white transition text-[11px] font-bold shadow" title="常時消灯防止">消灯:ON</button>
+            <button id="voiceGenderBtn" onclick="toggleVoiceGender()" class="px-2 py-1.5 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[11px] font-bold">声:女性</button>
+            <button id="voiceToggleBtn" onclick="toggleVoice()" class="px-2 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-emerald-400 transition text-[11px] font-bold">音声:ON</button>
+            <button id="vibrateToggleBtn" onclick="toggleVibration()" class="px-2 py-1.5 rounded-lg bg-slate-700 hover:bg-slate-600 text-emerald-400 transition text-[11px] font-bold">振動:ON</button>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
+
+        <!-- Top Status Card -->
+        <section class="bg-slate-800 rounded-2xl p-4 border border-slate-700/80 shadow-lg relative">
+            <div class="flex items-center justify-between border-b border-slate-700/60 pb-2 mb-3">
+                <div class="flex items-center space-x-2 flex-grow mr-2">
+                    <span class="text-emerald-400 text-sm">📍</span>
+                    <input type="text" id="locationInput" placeholder="ポイント名・釣り場メモ..." 
+                           class="bg-transparent text-sm font-medium focus:outline-none w-full text-slate-200 placeholder-slate-500 border-b border-transparent focus:border-emerald-500 transition">
+                </div>
+                <!-- 五十音順の魚種リスト -->
+                <select id="speciesSelect" class="bg-slate-700 text-xs font-semibold rounded-lg px-2 py-1.5 border border-slate-600 text-emerald-300 focus:outline-none">
+                    <option value="アカヒレタビラ">アカヒレタビラ</option>
+                    <option value="アブラボテ">アブラボテ</option>
+                    <option value="イチモンジタナゴ">イチモンジタナゴ</option>
+                    <option value="オオタナゴ">オオタナゴ</option>
+                    <option value="カゼトゲタナゴ">カゼトゲタナゴ</option>
+                    <option value="カネヒラ">カネヒラ</option>
+                    <option value="キタノアカヒレタビラ">キタノアカヒレタビラ</option>
+                    <option value="シロヒレタビラ">シロヒレタビラ</option>
+                    <option value="タイリクバラタナゴ">タイリクバラタナゴ</option>
+                    <option value="タナゴ(マタナゴ)">タナゴ(マタナゴ)</option>
+                    <option value="ニッポンバラタナゴ">ニッポンバラタナゴ</option>
+                    <option value="ミナミアカヒレタビラ">ミナミアカヒレタビラ</option>
+                    <option value="ヤリタナゴ">ヤリタナゴ</option>
+                    <option value="その他">その他</option>
+                </select>
+            </div>
+
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">経過時間</span>
+                    <span id="timerDisplay" class="font-mono text-base font-bold text-slate-100">00:00:00</span>
+                    <div class="mt-1 flex justify-center space-x-1">
+                        <button id="startTimerBtn" onclick="toggleTimer()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">開始</button>
+                        <button onclick="resetTimer()" class="text-[10px] bg-slate-700 hover:bg-slate-600 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
+                    <div class="flex items-baseline justify-center">
+                        <span id="catchRateDisplay" class="text-xl font-extrabold text-amber-400">0.0</span>
+                        <span class="text-[10px] text-slate-400 ml-0.5">匹/h</span>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/60 rounded-xl p-2.5 border border-slate-700/40 flex flex-col justify-center">
+                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">合計</span>
+                    <div class="flex items-baseline justify-center">
+                        <span id="totalCatchDisplay" class="text-2xl font-black text-emerald-400">0</span>
+                        <span class="text-[10px] text-slate-400 ml-0.5">匹</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Tally Counter Display & Quick Count Button -->
+        <section class="flex flex-col items-center my-auto w-full">
+            
+            <!-- 上部の3つの丸い個別カウンターボタン -->
+            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-2">
+                <!-- ♂ オスボタン -->
+                <button onclick="incrementCategory('male')" 
+                        class="btn-active aspect-square rounded-full bg-blue-950/70 border-2 border-blue-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
+                    <span class="text-xs font-black text-blue-300">♂ オス</span>
+                    <span id="maleCountBadge" class="text-2xl font-black text-blue-400 my-0.5">0</span>
+                    <span class="text-[9px] font-bold text-blue-200 bg-blue-900/80 px-2 py-0.5 rounded-full">+1</span>
+                </button>
+                <!-- ♀ メスボタン -->
+                <button onclick="incrementCategory('female')" 
+                        class="btn-active aspect-square rounded-full bg-pink-950/70 border-2 border-pink-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
+                    <span class="text-xs font-black text-pink-300">♀ メス</span>
+                    <span id="femaleCountBadge" class="text-2xl font-black text-pink-400 my-0.5">0</span>
+                    <span class="text-[9px] font-bold text-pink-200 bg-pink-900/80 px-2 py-0.5 rounded-full">+1</span>
+                </button>
+                <!-- ♂＆♀ ボタン -->
+                <button onclick="incrementCategory('other')" 
+                        class="btn-active aspect-square rounded-full bg-emerald-950/70 border-2 border-emerald-500/80 flex flex-col items-center justify-center shadow-lg transition relative p-2">
+                    <span class="text-xs font-black text-emerald-300">♂＆♀</span>
+                    <span id="otherCountBadge" class="text-2xl font-black text-emerald-400 my-0.5">0</span>
+                    <span class="text-[9px] font-bold text-emerald-200 bg-emerald-900/80 px-2 py-0.5 rounded-full">+1</span>
+                </button>
+            </div>
+
+            <!-- 下部の大きな丸いボタン（上のボタンと完全に独立した「なんでも」用カウンター）[cite: 1] -->
+            <div class="relative w-full max-w-[260px] aspect-square my-1 flex items-center justify-center">
+                <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
+
+                <button id="mainCounterBtn" onclick="incrementAny()" 
+                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-500 to-yellow-700 text-slate-950 font-black shadow-2xl border-4 border-amber-300/40 flex flex-col items-center justify-center relative active:brightness-110 select-none">
+                    <span class="text-[11px] uppercase tracking-widest font-bold text-amber-950/90 mb-0.5">なんでも（独立）</span>
+                    <div class="text-[11px] font-bold text-amber-950/90 space-x-1.5 mb-0.5 bg-amber-400/30 px-2.5 py-0.5 rounded-full">
+                        <span>♂:<span id="subMaleNum">0</span></span>
+                        <span>♀:<span id="subFemaleNum">0</span></span>
+                        <span>他:<span id="subOtherNum">0</span></span>
+                    </div>
+                    <span id="giantCountNumber" class="text-5xl font-black tracking-tight drop-shadow-md">0</span>
+                    <span class="mt-1 text-[10px] font-bold bg-slate-950/20 text-slate-900 px-2.5 py-0.5 rounded-full backdrop-blur-sm">
+                        TAP TO COUNT
+                    </span>
+                </button>
+            </div>
+
+            <!-- Quick Adjust Control -->
+            <div class="flex items-center justify-center space-x-3 mt-3 w-full">
+                <button onclick="decrementCounter()" 
+                        class="btn-active flex-1 max-w-[130px] bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                    ➖ 直近を1減らす (-1)
+                </button>
+                <button onclick="undoLastAction()" id="undoBtn" disabled 
+                        class="btn-active flex-1 max-w-[130px] bg-slate-800 disabled:opacity-40 hover:bg-slate-700 border border-slate-700 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                    ↩ 取り消し
+                </button>
+            </div>
+
+        </section>
+
+        <!-- Bottom Actions -->
+        <section class="grid grid-cols-2 gap-3 mt-1">
+            <button onclick="saveCurrentSession()" 
+                    class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg">
+                💾 釣果ログに保存
+            </button>
+            <button onclick="openHistoryModal()" 
+                    class="btn-active bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow">
+                📖 履歴・記録一覧
+            </button>
+        </section>
+
+    </main>
+
+    <!-- Footer Controls -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-2 px-4 text-center">
+        <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
+            <span>タナゴ専用仕様 Ver 3.4</span>
+            <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
+                🗑️ カウンター初期化
+            </button>
+        </div>
+    </footer>
+
+    <!-- History Modal -->
+    <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-700 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+            <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+                <h2 class="font-bold text-slate-100 text-sm">釣果履歴 & 時間帯別記録</h2>
+                <button onclick="closeHistoryModal()" class="text-slate-400 hover:text-white text-lg px-2">✕</button>
+            </div>
+            <div id="historyList" class="p-4 overflow-y-auto space-y-3 flex-grow"></div>
+            <div class="p-4 border-t border-slate-800 bg-slate-800/30 flex justify-between items-center">
+                <button onclick="exportLogsCSV()" class="text-xs font-semibold text-emerald-400">CSV書き出し</button>
+                <button onclick="closeHistoryModal()" class="bg-slate-700 text-slate-200 px-4 py-1.5 rounded-lg text-xs font-bold">閉じる</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-800 text-emerald-400 border border-emerald-500/40 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+        <span id="toastMsg">通知</span>
+    </div>
+
+    <script>
+        let counts = { male: 0, female: 0, other: 0, any: 0 };
+        let hourlyCounts = {}; 
+        let actionHistory = [];
+        let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
+        let startTimeStamp = null;
+        let voiceEnabled = true, vibrationEnabled = true, wakeLockEnabled = true;
+        let voiceGender = 'female';
+        let wakeLock = null;
+        let hasAlerted2Hours = false;
+
+        window.onload = () => {
+            loadStateFromStorage();
+            updateUI();
+            updateTimerDisplay();
+            requestWakeLock();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
+        };
+
+        // --- Screen Wake Lock API ---
+        async function requestWakeLock() {
+            if (!wakeLockEnabled || !('wakeLock' in navigator)) return;
+            try {
+                if (document.visibilityState === 'visible') {
+                    wakeLock = await navigator.wakeLock.request('screen');
+                    wakeLock.addEventListener('release', () => {
+                        wakeLock = null;
+                        if (wakeLockEnabled) {
+                            setTimeout(requestWakeLock, 1000);
+                        }
+                    });
+                }
+            } catch (err) {}
+        }
+
+        function toggleWakeLock() {
+            wakeLockEnabled = !wakeLockEnabled;
+            const btn = document.getElementById('wakeLockToggleBtn');
+            if (wakeLockEnabled) {
+                requestWakeLock();
+                btn.className = "px-2 py-1.5 rounded-lg bg-emerald-600 text-white transition text-[11px] font-bold shadow";
+                btn.innerText = "消灯:ON";
+                showToast("画面の消灯防止：ON");
+            } else {
+                if (wakeLock) {
+                    wakeLock.release();
+                    wakeLock = null;
+                }
+                btn.className = "px-2 py-1.5 rounded-lg bg-slate-700 text-slate-400 transition text-[11px] font-bold";
+                btn.innerText = "消灯:OFF";
+                showToast("画面の消灯防止：OFF");
+            }
+        }
+
+        document.addEventListener('visibilitychange', async () => {
+            if (wakeLockEnabled && document.visibilityState === 'visible') {
+                await requestWakeLock();
+            }
+        });
+
+        document.addEventListener('click', () => {
+            if (wakeLockEnabled && wakeLock === null) {
+                requestWakeLock();
+            }
+        }, { passive: true });
+
+        // --- 音声性別の切り替えボタン ---
+        function toggleVoiceGender() {
+            const btn = document.getElementById('voiceGenderBtn');
+            if (voiceGender === 'female') {
+                voiceGender = 'male';
+                btn.className = "px-2 py-1.5 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/50 transition text-[11px] font-bold";
+                btn.innerText = "声:男性";
+                showToast("音声を「男性の声」に切り替えました");
+            } else {
+                voiceGender = 'female';
+                btn.className = "px-2 py-1.5 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[11px] font-bold";
+                btn.innerText = "声:女性";
+                showToast("音声を「女性の声」に切り替えました");
+            }
+        }
+
+        function speakText(textToSpeak) {
+            if (!voiceEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'ja-JP';
+
+                if (voiceGender === 'female') {
+                    utterance.rate = 1.1;
+                    utterance.pitch = 1.4;
+                } else {
+                    utterance.rate = 1.0;
+                    utterance.pitch = 0.85;
+                }
+                utterance.volume = 1.0;
+
+                const voices = window.speechSynthesis.getVoices();
+                const targetVoice = voices.find(voice => {
+                    if (!voice.lang.includes('ja')) return false;
+                    if (voiceGender === 'female') {
+                        return voice.name.includes('Female') || voice.name.includes('Kyoko') || voice.name.includes('Google') || voice.name.includes('Nanami') || voice.name.includes('Hina');
+                    } else {
+                        return voice.name.includes('Male') || voice.name.includes('Oto-san') || voice.name.includes('Keita') || voice.name.includes('Ichiro');
+                    }
+                });
+
+                if (targetVoice) {
+                    utterance.voice = targetVoice;
+                }
+
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {}
+        }
+
+        function speakTanago(totalCount) {
+            let textToSpeak = 'たなごちゃんです';
+            
+            if (totalCount === 503) {
+                textToSpeak = 'ごー丸さんです';
+            } else if (totalCount === 10) {
+                textToSpeak = 'つぬけです';
+            } else if (totalCount > 0 && totalCount % 50 === 0) {
+                const soku = Math.floor(totalCount / 100);
+                const isHan = (totalCount % 100) === 50;
+                
+                const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+                let sokuStr = '';
+                
+                if (soku > 0 && soku <= 10) {
+                    sokuStr = numbers[soku] + 'そく';
+                } else if (soku > 10) {
+                    sokuStr = soku + 'そく';
+                }
+
+                if (isHan) {
+                    if (soku === 0) {
+                        textToSpeak = 'はんそくです';
+                    } else {
+                        textToSpeak = sokuStr + 'はんです';
+                    }
+                } else {
+                    textToSpeak = sokuStr + 'です';
+                }
+            }
+            speakText(textToSpeak);
+        }
+
+        function triggerVibration() {
+            if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
+        }
+
+        function getCurrentHourRangeKey() {
+            const now = new Date();
+            const startHour = now.getHours();
+            const endHour = (startHour + 1) % 24;
+            const startStr = String(startHour).padStart(2, '0') + ':00';
+            const endStr = String(endHour).padStart(2, '0') + ':00';
+            return `${startStr}〜${endStr}`;
+        }
+
+        // --- 上部の個別ボタン（オス・メス・♂＆♀）のカウント処理 ---
+        function incrementCategory(category) {
+            if (isNaN(counts[category])) counts[category] = 0;
+            counts[category]++;
+
+            const hourKey = getCurrentHourRangeKey();
+            if (!hourlyCounts[hourKey]) {
+                hourlyCounts[hourKey] = { male: 0, female: 0, other: 0, any: 0 };
+            }
+            if (isNaN(hourlyCounts[hourKey][category])) hourlyCounts[hourKey][category] = 0;
+            hourlyCounts[hourKey][category]++;
+
+            actionHistory.push({ type: 'add', category: category, hourKey: hourKey });
+
+            const total = getTotalCount();
+            if (!isTimerRunning && total === 1) startTimer();
+
+            speakTanago(total);
+            triggerVibration();
+            updateUI();
+            saveStateToStorage();
+        }
+
+        // --- 下部の「なんでも」独立ボタンのカウント処理 ---
+        function incrementAny() {
+            if (isNaN(counts.any)) counts.any = 0;
+            counts.any++;
+
+            const hourKey = getCurrentHourRangeKey();
+            if (!hourlyCounts[hourKey]) {
+                hourlyCounts[hourKey] = { male: 0, female: 0, other: 0, any: 0 };
+            }
+            if (isNaN(hourlyCounts[hourKey].any)) hourlyCounts[hourKey].any = 0;
+            hourlyCounts[hourKey].any++;
+
+            actionHistory.push({ type: 'add', category: 'any', hourKey: hourKey });
+
+            const total = getTotalCount();
+            if (!isTimerRunning && total === 1) startTimer();
+
+            speakTanago(total);
+            triggerVibration();
+            updateUI();
+            saveStateToStorage();
+        }
+
+        function decrementCounter() {
+            if (actionHistory.length === 0) return;
+            const last = actionHistory[actionHistory.length - 1];
+            if (counts[last.category] > 0) {
+                counts[last.category]--;
+                if (hourlyCounts[last.hourKey] && hourlyCounts[last.hourKey][last.category] > 0) {
+                    hourlyCounts[last.hourKey][last.category]--;
+                }
+                actionHistory.pop();
+                triggerVibration();
+                updateUI();
+                saveStateToStorage();
+                showToast('直近のカウントを1減らしました');
+            }
+        }
+
+        function undoLastAction() {
+            decrementCounter();
+        }
+
+        function getTotalCount() {
+            const m = Number(counts.male) || 0;
+            const f = Number(counts.female) || 0;
+            const o = Number(counts.other) || 0;
+            const a = Number(counts.any) || 0;
+            return m + f + o + a;
+        }
+
+        function updateUI() {
+            const m = Number(counts.male) || 0;
+            const f = Number(counts.female) || 0;
+            const o = Number(counts.other) || 0;
+            const a = Number(counts.any) || 0;
+            const total = m + f + o + a;
+
+            document.getElementById('maleCountBadge').innerText = m;
+            document.getElementById('femaleCountBadge').innerText = f;
+            document.getElementById('otherCountBadge').innerText = o;
+
+            document.getElementById('subMaleNum').innerText = m;
+            document.getElementById('subFemaleNum').innerText = f;
+            document.getElementById('subOtherNum').innerText = o;
+
+            document.getElementById('totalCatchDisplay').innerText = total;
+            document.getElementById('giantCountNumber').innerText = a;
+
+            document.getElementById('undoBtn').disabled = actionHistory.length === 0;
+            calculateCatchRate();
+        }
+
+        // --- Timer & Rate Logic ---
+        function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(); }
+        
+        function startTimer() {
+            if (isTimerRunning) return;
+            isTimerRunning = true;
+            document.getElementById('startTimerBtn').innerText = '一時停止';
+            
+            const now = Date.now();
+            if (!startTimeStamp) {
+                startTimeStamp = now - (secondsElapsed * 1000);
+            }
+
+            timerInterval = setInterval(() => {
+                secondsElapsed = Math.floor((Date.now() - startTimeStamp) / 1000);
+                updateTimerDisplay();
+                calculateCatchRate();
+                
+                if (secondsElapsed >= 7200 && !hasAlerted2Hours) {
+                    hasAlerted2Hours = true;
+                    speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう");
+                    showToast("経過2時間：休憩をとりましょう");
+                }
+
+                saveStateToStorage();
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isTimerRunning = false;
+            clearInterval(timerInterval);
+            document.getElementById('startTimerBtn').innerText = '再開';
+            saveStateToStorage();
+        }
+
+        function resetTimer() {
+            pauseTimer();
+            secondsElapsed = 0;
+            startTimeStamp = null;
+            hasAlerted2Hours = false;
+            document.getElementById('startTimerBtn').innerText = '開始';
+            updateTimerDisplay();
+            calculateCatchRate();
+            saveStateToStorage();
+        }
+
+        function updateTimerDisplay() {
+            const hrs = Math.floor(secondsElapsed / 3600).toString().padStart(2, '0');
+            const mins = Math.floor((secondsElapsed % 3600) / 60).toString().padStart(2, '0');
+            const secs = (secondsElapsed % 60).toString().padStart(2, '0');
+            document.getElementById('timerDisplay').innerText = `${hrs}:${mins}:${secs}`;
+        }
+
+        function calculateCatchRate() {
+            const total = getTotalCount();
+            if (secondsElapsed <= 0 || total === 0) {
+                document.getElementById('catchRateDisplay').innerText = "0.0";
+                return;
+            }
+            const rate = total / (secondsElapsed / 3600);
+            document.getElementById('catchRateDisplay').innerText = rate.toFixed(1);
+        }
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            document.getElementById('voiceToggleBtn').innerText = voiceEnabled ? "音声:ON" : "音声:OFF";
+            showToast(voiceEnabled ? "音声読み上げ：ON" : "音声読み上げ：OFF");
+        }
+        function toggleVibration() {
+            vibrationEnabled = !vibrationEnabled;
+            document.getElementById('vibrateToggleBtn').innerText = vibrationEnabled ? "振動:ON" : "振動:OFF";
+        }
+
+        function saveCurrentSession() {
+            const total = getTotalCount();
+            if (total === 0) { showToast('釣果が0匹のため保存されません'); return; }
+            const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
+            const currentRate = secondsElapsed > 0 ? (total / (secondsElapsed / 3600)).toFixed(1) : total.toFixed(1);
+            
+            history.unshift({
+                id: Date.now(),
+                date: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
+                location: document.getElementById('locationInput').value.trim() || '指定なし',
+                species: document.getElementById('speciesSelect').value,
+                counts: { ...counts },
+                hourlyCounts: { ...hourlyCounts },
+                total: total,
+                durationSeconds: secondsElapsed,
+                hourlyRate: currentRate
+            });
+            localStorage.setItem('tanago_history', JSON.stringify(history));
+            showToast('釣果と時間帯別記録を保存しました！');
+        }
+
+        function openHistoryModal() {
+            const container = document.getElementById('historyList');
+            const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
+            if (history.length === 0) {
+                container.innerHTML = `<div class="text-center py-8 text-slate-500 text-xs">履歴はありません</div>`;
+            } else {
+                container.innerHTML = history.map(item => {
+                    let hourlyHtml = '';
+                    if (item.hourlyCounts && Object.keys(item.hourlyCounts).length > 0) {
+                        hourlyHtml = `<div class="mt-2 pt-2 border-t border-slate-700/60 space-y-1">` +
+                            Object.keys(item.hourlyCounts).sort().map(hourKey => {
+                                const hc = item.hourlyCounts[hourKey];
+                                const hTotal = (Number(hc.male) || 0) + (Number(hc.female) || 0) + (Number(hc.other) || 0) + (Number(hc.any) || 0);
+                                return `<div class="flex justify-between text-[11px] text-slate-400 pl-2">
+                                    <span>🕐 ${hourKey}</span>
+                                    <span>計 <b class="text-emerald-300">${hTotal}匹</b> (♂${Number(hc.male)||0}/♀${Number(hc.female)||0}/♂&♀${Number(hc.other)||0}/なんでも${Number(hc.any)||0})</span>
+                                </div>`;
+                            }).join('') + `</div>`;
+                    }
+
+                    const m = Number(item.counts.male) || 0;
+                    const f = Number(item.counts.female) || 0;
+                    const o = Number(item.counts.other) || 0;
+                    const a = Number(item.counts.any) || 0;
+
+                    return `
+                        <div class="bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs space-y-1">
+                            <div class="flex justify-between font-bold text-slate-200">
+                                <span class="text-emerald-400">${item.date}</span>
+                                <span>計 ${item.total} 匹 (${item.hourlyRate} 匹/h)</span>
+                            </div>
+                            <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}</div>
+                            <div class="flex space-x-2 text-slate-300 pt-1 border-t border-slate-700">
+                                <span class="text-blue-400">♂ ${m}</span>
+                                <span class="text-pink-400">♀ ${f}</span>
+                                <span class="text-emerald-400">♂&♀ ${o}</span>
+                                <span class="text-amber-400">なんでも ${a}</span>
+                            </div>
+                            ${hourlyHtml}
+                        </div>
+                    `;
+                }).join('');
+            }
+            document.getElementById('historyModal').classList.remove('hidden');
+        }
+        function closeHistoryModal() { document.getElementById('historyModal').classList.add('hidden'); }
+
+        function exportLogsCSV() {
+            const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
+            if (history.length === 0) { showToast('データがありません'); return; }
+            let csv = "data:text/csv;charset=utf-8,日時,場所,魚種,合計,オス,メス,♂＆♀,なんでも,平均時速\n";
+            history.forEach(r => {
+                const m = Number(r.counts.male) || 0;
+                const f = Number(r.counts.female) || 0;
+                const o = Number(r.counts.other) || 0;
+                const a = Number(r.counts.any) || 0;
+                csv += `"${r.date}","${r.location}","${r.species}",${r.total},${m},${f},${o},${a},${r.hourlyRate}\n`;
+            });
+            const link = document.createElement("a");
+            link.setAttribute("href", encodeURI(csv));
+            link.setAttribute("download", "tanago_log.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function saveStateToStorage() {
+            localStorage.setItem('tanago_current_session', JSON.stringify({
+                counts,
+                hourlyCounts,
+                secondsElapsed,
+                startTimeStamp,
+                isTimerRunning,
+                hasAlerted2Hours,
+                location: document.getElementById('locationInput').value,
+                species: document.getElementById('speciesSelect').value
+            }));
+        }
+
+        function loadStateFromStorage() {
+            const saved = localStorage.getItem('tanago_current_session');
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    if (data.counts) {
+                        counts = {
+                            male: Number(data.counts.male) || 0,
+                            female: Number(data.counts.female) || 0,
+                            other: Number(data.counts.other) || 0,
+                            any: Number(data.counts.any) || 0
+                        };
+                    }
+                    hourlyCounts = data.hourlyCounts || {};
+                    secondsElapsed = Number(data.secondsElapsed) || 0;
+                    startTimeStamp = data.startTimeStamp || null;
+                    isTimerRunning = data.isTimerRunning || false;
+                    hasAlerted2Hours = data.hasAlerted2Hours || false;
+                    
+                    if (data.location) document.getElementById('locationInput').value = data.location;
+                    if (data.species) document.getElementById('speciesSelect').value = data.species;
+                } catch (e) {}
+            }
+        }
+
+        function confirmResetAll() {
+            if (confirm("カウンターの数値をすべてリセットしますか？")) {
+                counts = { male: 0, female: 0, other: 0, any: 0 };
+                hourlyCounts = {};
+                actionHistory = [];
+                resetTimer();
+                updateUI();
+                localStorage.removeItem('tanago_current_session');
+                showToast("カウンターをリセットしました");
+            }
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.remove('opacity-0');
+            t.classList.add('opacity-100');
+            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+        }
+    </script>
+</body>
+</html>
