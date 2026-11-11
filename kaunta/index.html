@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴカウンター - デジタルボタン版</title>
+    <title>タナゴカウンター - 画像ボタン版</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -15,6 +15,24 @@
         }
         .btn-active:active {
             transform: scale(0.96);
+        }
+        .image-btn {
+            position: relative;
+            transition: transform 0.1s ease, filter 0.1s ease;
+            background: transparent;
+            border: none;
+            padding: 0;
+            cursor: pointer;
+        }
+        .image-btn img {
+            width: 100%;
+            height: auto;
+            display: block;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.5));
+        }
+        .image-btn:active {
+            transform: scale(0.95);
+            filter: brightness(1.1);
         }
         .counter-btn {
             position: relative;
@@ -41,7 +59,7 @@
             <div class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">魚</div>
             <div>
                 <h1 class="font-bold text-base leading-tight tracking-wide">タナゴカウンター</h1>
-                <p class="text-[10px] text-slate-400">Digital Counter Edition</p>
+                <p class="text-[10px] text-slate-400">Image Button Edition</p>
             </div>
         </div>
         
@@ -80,9 +98,6 @@
                     <option value="ミナミアカヒレタビラ">ミナミアカヒレタビラ</option>
                     <option value="ヤリタナゴ">ヤリタナゴ</option>
                     <option value="その他">その他</option>
-                    <option value="ワカサギ">ワカサギ</option>
-                    <option value="ハゼ">ハゼ</option>
-                    <option value="ヘラ鮒">ヘラ鮒</option>
                 </select>
             </div>
 
@@ -114,38 +129,29 @@
             </div>
         </section>
 
-        <!-- Main Tally Counter Display & Quick Count Button -->
+        <!-- Main Tally Counter Display & Image Buttons -->
         <section class="flex flex-col items-center my-auto w-full">
             
-            <!-- 上部の3つのデジタル画像風ボタン（青・赤・緑）[cite: 2] -->
-            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1">
-                <!-- ♂ オスボタン (ブルー) -->
-                <button onclick="incrementCategory('male')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-blue-900 to-blue-950 border-4 border-blue-600/80 flex flex-col items-center justify-center p-2 text-cyan-300">
-                    <span class="text-xs font-black tracking-widest text-cyan-200">♂ MALE</span>
-                    <span id="maleCountBadge" class="text-3xl font-mono font-black text-cyan-400 my-1 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-cyan-300/80 tracking-wider">TAP TO COUNT</span>
+            <!-- 上部の3つの画像ボタン（オス・メス・♂＆♀） -->
+            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1 items-center">
+                <!-- ♂ オスボタン (画像) -->
+                <button onclick="incrementCategory('male')" class="image-btn">
+                    <img src="./images/male-btn.png" alt="オスボタン"[cite: 8]>
                 </button>
 
-                <!-- ♀ メスボタン (レッド) -->
-                <button onclick="incrementCategory('female')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-red-900 to-red-950 border-4 border-red-600/80 flex flex-col items-center justify-center p-2 text-rose-300">
-                    <span class="text-xs font-black tracking-widest text-rose-200">♀ FEMALE</span>
-                    <span id="femaleCountBadge" class="text-3xl font-mono font-black text-rose-400 my-1 drop-shadow-[0_0_8px_rgba(251,113,133,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-rose-300/80 tracking-wider">TAP TO COUNT</span>
+                <!-- ♀ メスボタン (画像) -->
+                <button onclick="incrementCategory('female')" class="image-btn">
+                    <img src="./images/female-btn.png" alt="メスボタン"[cite: 6]>
                 </button>
 
-                <!-- ♂＆♀ ボタン (グリーン) -->
-                <button onclick="incrementCategory('other')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-emerald-900 to-emerald-950 border-4 border-emerald-600/80 flex flex-col items-center justify-center p-2 text-emerald-300">
-                    <span class="text-xs font-black tracking-widest text-emerald-200">♂&♀ OTHER</span>
-                    <span id="otherCountBadge" class="text-3xl font-mono font-black text-emerald-400 my-1 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-emerald-300/80 tracking-wider">TAP TO COUNT</span>
+                <!-- ♂＆♀ ボタン (画像) -->
+                <button onclick="incrementCategory('other')" class="image-btn">
+                    <img src="./images/other-btn.png" alt="♂&♀ボタン"[cite: 7]>
                 </button>
             </div>
 
             <!-- 下部の大きな丸い独立ボタン（「なんでも」用） -->
-            <div class="relative w-full max-w-[260px] aspect-square my-1 flex items-center justify-center">
+            <div class="relative w-full max-w-[240px] aspect-square my-1 flex items-center justify-center">
                 <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
 
                 <button id="mainCounterBtn" onclick="incrementAny()" 
@@ -156,7 +162,7 @@
                         <span>♀:<span id="subFemaleNum">0</span></span>
                         <span>他:<span id="subOtherNum">0</span></span>
                     </div>
-                    <span id="giantCountNumber" class="text-6xl font-mono font-black tracking-tight text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">000</span>
+                    <span id="giantCountNumber" class="text-5xl font-mono font-black tracking-tight text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">000</span>
                     <span class="mt-1 text-[10px] font-bold bg-slate-950/40 text-amber-200 px-3 py-0.5 rounded-full backdrop-blur-sm">
                         TAP TO COUNT
                     </span>
@@ -340,7 +346,6 @@
             } catch (e) {}
         }
 
-        // --- 上の3つの合計数を計算する関数（「なんでも」を含めない） ---
         function getTopThreeTotal() {
             const m = Number(counts.male) || 0;
             const f = Number(counts.female) || 0;
@@ -414,7 +419,7 @@
             if (!isTimerRunning && total === 1) startTimer();
 
             const topTotal = getTopThreeTotal();
-            speakTanago(topTotal, false); // 上の3つの合計で節目判定
+            speakTanogo(topTotal, false);
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -437,7 +442,7 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanago(0, true); // 下のボタンは節目判定なしで「お魚ちゃんです」
+            speakTanago(0, true); // 「お魚ちゃんです」
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -477,10 +482,6 @@
             const o = Number(counts.other) || 0;
             const a = Number(counts.any) || 0;
             const total = m + f + o + a;
-
-            document.getElementById('maleCountBadge').innerText = String(m).padStart(3, '0');
-            document.getElementById('femaleCountBadge').innerText = String(f).padStart(3, '0');
-            document.getElementById('otherCountBadge').innerText = String(o).padStart(3, '0');
 
             document.getElementById('subMaleNum').innerText = m;
             document.getElementById('subFemaleNum').innerText = f;
