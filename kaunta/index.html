@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴカウンター - デジタルボタン版</title>
+    <title>タナゴカウンター - 開始時刻ベース集計版</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -14,7 +14,7 @@
             -webkit-tap-highlight-color: transparent;
         }
         .btn-active:active {
-            transform: scale(0.96);
+            transform: scale(0.95);
         }
         .counter-btn {
             position: relative;
@@ -114,10 +114,10 @@
             </div>
         </section>
 
-        <!-- Main Tally Counter Display & Quick Count Button -->
+        <!-- Main Tally Counter Display & Digital Buttons -->
         <section class="flex flex-col items-center my-auto w-full">
             
-            <!-- 上部の3つのデジタル画像風ボタン（青・赤・緑）[cite: 2] -->
+            <!-- 上部の3つのデジタルボタン（青・赤・緑） -->
             <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1">
                 <!-- ♂ オスボタン (ブルー) -->
                 <button onclick="incrementCategory('male')" 
@@ -144,13 +144,13 @@
                 </button>
             </div>
 
-            <!-- 下部の大きな丸い独立ボタン（「なんでも」用） -->
-            <div class="relative w-full max-w-[260px] aspect-square my-1 flex items-center justify-center">
+            <!-- 下部の大きな丸い独立ボタン（タナゴカウンター） -->
+            <div class="relative w-full max-w-[250px] aspect-square my-1 flex items-center justify-center">
                 <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
 
                 <button id="mainCounterBtn" onclick="incrementAny()" 
                         class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-yellow-900 text-slate-950 font-black shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center relative active:brightness-110 select-none">
-                    <span class="text-[10px] uppercase tracking-widest font-bold text-amber-200 mb-0.5">なんでもカウンター</span>
+                    <span class="text-[10px] uppercase tracking-widest font-bold text-amber-200 mb-0.5">タナゴカウンター</span>
                     <div class="text-[11px] font-bold text-amber-100 space-x-1.5 mb-0.5 bg-slate-950/40 px-3 py-0.5 rounded-full border border-amber-500/30">
                         <span>♂:<span id="subMaleNum">0</span></span>
                         <span>♀:<span id="subFemaleNum">0</span></span>
@@ -227,10 +227,16 @@
         let actionHistory = [];
         let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
         let startTimeStamp = null;
+        let firstActionRealTime = null; // 最初のカウントまたはタイマー開始時の実時刻を保持
+        let pauseStartTimestamp = null;
+        let totalPauseDurationMs = 0;
         let voiceEnabled = true, vibrationEnabled = true, wakeLockEnabled = true;
         let voiceGender = 'female';
         let wakeLock = null;
         let hasAlerted2Hours = false;
+
+        const NORMAL_VOLUME = 0.6;
+        const HIGHLIGHT_VOLUME = 1.0;
 
         window.onload = () => {
             loadStateFromStorage();
@@ -305,7 +311,8 @@
             }
         }
 
-        function speakText(textToSpeak) {
+        // --- 音声発声関数（節目時のボリューム一時昇圧対応） ---
+        function speakText(textToSpeak, isMilestone = false) {
             if (!voiceEnabled || !('speechSynthesis' in window)) return;
             try {
                 window.speechSynthesis.cancel();
@@ -320,7 +327,8 @@
                     utterance.rate = 1.0;
                     utterance.pitch = 0.85;
                 }
-                utterance.volume = 1.0;
+
+                utterance.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
 
                 const voices = window.speechSynthesis.getVoices();
                 const targetVoice = voices.find(voice => {
@@ -340,68 +348,76 @@
             } catch (e) {}
         }
 
-        // --- 上の3つの合計数を計算する関数（「なんでも」を含めない） ---
-        function getTopThreeTotal() {
-            const m = Number(counts.male) || 0;
-            const f = Number(counts.female) || 0;
-            const o = Number(counts.other) || 0;
-            return m + f + o;
-        }
+        // --- 節目の音声判定（上3つ ＋ 下のタナゴカウンターの総合計で判定） ---
+        function speakTanagoForTotal(totalCount) {
+            let textToSpeak = 'たなごちゃんです';
+            let isMilestone = false;
 
-        function speakTanago(topCount, isAnyButton = false) {
-            let textToSpeak = isAnyButton ? 'お魚ちゃんです' : 'たなごちゃんです';
-            
-            if (!isAnyButton) {
-                if (topCount === 503) {
-                    textToSpeak = 'ごー丸さんです';
-                } else if (topCount === 10) {
-                    textToSpeak = 'つぬけです';
-                } else if (topCount > 0 && topCount % 50 === 0) {
-                    const soku = Math.floor(topCount / 100);
-                    const isHan = (topCount % 100) === 50;
-                    
-                    const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-                    let sokuStr = '';
-                    
-                    if (soku > 0 && soku <= 10) {
-                        sokuStr = numbers[soku] + 'そく';
-                    } else if (soku > 10) {
-                        sokuStr = soku + 'そく';
-                    }
+            if (totalCount === 503) {
+                textToSpeak = 'ごー丸さんです';
+                isMilestone = true;
+            } else if (totalCount === 10) {
+                textToSpeak = 'つぬけです';
+                isMilestone = true;
+            } else if (totalCount > 0 && totalCount % 50 === 0) {
+                isMilestone = true;
+                const soku = Math.floor(totalCount / 100);
+                const isHan = (totalCount % 100) === 50;
+                
+                const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+                let sokuStr = '';
+                
+                if (soku > 0 && soku <= 10) {
+                    sokuStr = numbers[soku] + 'そく';
+                } else if (soku > 10) {
+                    sokuStr = soku + 'そく';
+                }
 
-                    if (isHan) {
-                        if (soku === 0) {
-                            textToSpeak = 'はんそくです';
-                        } else {
-                            textToSpeak = sokuStr + 'はんです';
-                        }
+                if (isHan) {
+                    if (soku === 0) {
+                        textToSpeak = 'はんそくです';
                     } else {
-                        textToSpeak = sokuStr + 'です';
+                        textToSpeak = sokuStr + 'はんです';
                     }
+                } else {
+                    textToSpeak = sokuStr + 'です';
                 }
             }
-            speakText(textToSpeak);
+
+            speakText(textToSpeak, isMilestone);
         }
 
         function triggerVibration() {
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
         }
 
-        function getCurrentHourRangeKey() {
-            const now = new Date();
-            const startHour = now.getHours();
-            const endHour = (startHour + 1) % 24;
-            const startStr = String(startHour).padStart(2, '0') + ':00';
-            const endStr = String(endHour).padStart(2, '0') + ':00';
-            return `${startStr}〜${endStr}`;
+        // --- 開始時刻（例: 18:15）を起点とした1時間ごとの時間帯キーを生成 ---
+        function getElapsedHourRangeKey() {
+            if (!firstActionRealTime) {
+                firstActionRealTime = Date.now();
+            }
+            // 経過した実時間（秒）をベースに何時間目かを算出
+            const elapsedSecondsFromStart = Math.floor((Date.now() - firstActionRealTime) / 1000);
+            const hourIndex = Math.floor(elapsedSecondsFromStart / 3600);
+
+            // 開始実時刻に何時間分かを足して「18:15〜19:15」のようなフォーマットを作る
+            const blockStartTime = new Date(firstActionRealTime + (hourIndex * 3600 * 1000));
+            const blockEndTime = new Date(firstActionRealTime + ((hourIndex + 1) * 3600 * 1000));
+
+            const startStr = String(blockStartTime.getHours()).padStart(2, '0') + ':' + String(blockStartTime.getMinutes()).padStart(2, '0');
+            const endStr = String(blockEndTime.getHours()).padStart(2, '0') + ':' + String(blockEndTime.getMinutes()).padStart(2, '0');
+
+            return `${startStr}〜${endStr} (${hourIndex + 1}h目)`;
         }
 
         // --- 個別ボタン（オス・メス・♂＆♀）のカウント処理 ---
         function incrementCategory(category) {
+            if (!firstActionRealTime) firstActionRealTime = Date.now();
+
             if (isNaN(counts[category])) counts[category] = 0;
             counts[category]++;
 
-            const hourKey = getCurrentHourRangeKey();
+            const hourKey = getElapsedHourRangeKey();
             if (!hourlyCounts[hourKey]) {
                 hourlyCounts[hourKey] = { male: 0, female: 0, other: 0, any: 0 };
             }
@@ -413,19 +429,20 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            const topTotal = getTopThreeTotal();
-            speakTanago(topTotal, false); // 上の3つの合計で節目判定
+            speakTanagoForTotal(total); // 総合計で節目判定
             triggerVibration();
             updateUI();
             saveStateToStorage();
         }
 
-        // --- 下部の「なんでも」独立ボタンのカウント処理 ---
+        // --- 下部の「タナゴカウンター」独立ボタンのカウント処理 ---
         function incrementAny() {
+            if (!firstActionRealTime) firstActionRealTime = Date.now();
+
             if (isNaN(counts.any)) counts.any = 0;
             counts.any++;
 
-            const hourKey = getCurrentHourRangeKey();
+            const hourKey = getElapsedHourRangeKey();
             if (!hourlyCounts[hourKey]) {
                 hourlyCounts[hourKey] = { male: 0, female: 0, other: 0, any: 0 };
             }
@@ -437,7 +454,7 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanago(0, true); // 下のボタンは節目判定なしで「お魚ちゃんです」
+            speakTanagoForTotal(total); // 総合計で節目判定
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -498,22 +515,31 @@
         
         function startTimer() {
             if (isTimerRunning) return;
+            
+            const now = Date.now();
+            if (!firstActionRealTime) firstActionRealTime = now;
+
+            if (pauseStartTimestamp) {
+                totalPauseDurationMs += (now - pauseStartTimestamp);
+                pauseStartTimestamp = null;
+            }
+
             isTimerRunning = true;
             document.getElementById('startTimerBtn').innerText = '一時停止';
             
-            const now = Date.now();
             if (!startTimeStamp) {
-                startTimeStamp = now - (secondsElapsed * 1000);
+                startTimeStamp = now;
             }
 
             timerInterval = setInterval(() => {
-                secondsElapsed = Math.floor((Date.now() - startTimeStamp) / 1000);
+                const currentNow = Date.now();
+                secondsElapsed = Math.floor((currentNow - startTimeStamp - totalPauseDurationMs) / 1000);
                 updateTimerDisplay();
                 calculateCatchRate();
                 
                 if (secondsElapsed >= 7200 && !hasAlerted2Hours) {
                     hasAlerted2Hours = true;
-                    speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう");
+                    speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう", true);
                     showToast("経過2時間：休憩をとりましょう");
                 }
 
@@ -522,7 +548,9 @@
         }
 
         function pauseTimer() {
+            if (!isTimerRunning) return;
             isTimerRunning = false;
+            pauseStartTimestamp = Date.now();
             clearInterval(timerInterval);
             document.getElementById('startTimerBtn').innerText = '再開';
             saveStateToStorage();
@@ -530,8 +558,12 @@
 
         function resetTimer() {
             pauseTimer();
+            isTimerRunning = false;
             secondsElapsed = 0;
             startTimeStamp = null;
+            firstActionRealTime = null;
+            pauseStartTimestamp = null;
+            totalPauseDurationMs = 0;
             hasAlerted2Hours = false;
             document.getElementById('startTimerBtn').innerText = '開始';
             updateTimerDisplay();
@@ -572,6 +604,12 @@
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
             const currentRate = secondsElapsed > 0 ? (total / (secondsElapsed / 3600)).toFixed(1) : total.toFixed(1);
             
+            let currentTotalPause = totalPauseDurationMs;
+            if (pauseStartTimestamp) {
+                currentTotalPause += (Date.now() - pauseStartTimestamp);
+            }
+            const pauseMinutes = Math.floor(currentTotalPause / 60000);
+
             history.unshift({
                 id: Date.now(),
                 date: new Date().toLocaleDateString('ja-JP', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }),
@@ -581,6 +619,7 @@
                 hourlyCounts: { ...hourlyCounts },
                 total: total,
                 durationSeconds: secondsElapsed,
+                pauseDurationMinutes: pauseMinutes,
                 hourlyRate: currentRate
             });
             localStorage.setItem('tanago_history', JSON.stringify(history));
@@ -601,8 +640,8 @@
                                 const hc = item.hourlyCounts[hourKey];
                                 const hTotal = (Number(hc.male) || 0) + (Number(hc.female) || 0) + (Number(hc.other) || 0) + (Number(hc.any) || 0);
                                 return `<div class="flex justify-between text-[11px] text-slate-400 pl-2">
-                                    <span>🕐 ${hourKey}</span>
-                                    <span>計 <b class="text-emerald-300">${hTotal}匹</b> (♂${Number(hc.male)||0}/♀${Number(hc.female)||0}/♂&♀${Number(hc.other)||0}/なんでも${Number(hc.any)||0})</span>
+                                    <span>⏱️ ${hourKey}</span>
+                                    <span>計 <b class="text-emerald-300">${hTotal}匹</b> (♂${Number(hc.male)||0}/♀${Number(hc.female)||0}/♂&♀${Number(hc.other)||0}/タナゴ${Number(hc.any)||0})</span>
                                 </div>`;
                             }).join('') + `</div>`;
                     }
@@ -611,6 +650,7 @@
                     const f = Number(item.counts.female) || 0;
                     const o = Number(item.counts.other) || 0;
                     const a = Number(item.counts.any) || 0;
+                    const pauseText = item.pauseDurationMinutes ? ` (休憩: ${item.pauseDurationMinutes}分)` : '';
 
                     return `
                         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs space-y-1">
@@ -618,12 +658,12 @@
                                 <span class="text-emerald-400">${item.date}</span>
                                 <span>計 ${item.total} 匹 (${item.hourlyRate} 匹/h)</span>
                             </div>
-                            <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}</div>
+                            <div class="text-slate-400">場所: ${item.location} / 魚種: ${item.species}${pauseText}</div>
                             <div class="flex space-x-2 text-slate-300 pt-1 border-t border-slate-800">
                                 <span class="text-cyan-400">♂ ${m}</span>
                                 <span class="text-rose-400">♀ ${f}</span>
                                 <span class="text-emerald-400">♂&♀ ${o}</span>
-                                <span class="text-amber-400">なんでも ${a}</span>
+                                <span class="text-amber-400">タナゴ ${a}</span>
                             </div>
                             ${hourlyHtml}
                         </div>
@@ -637,13 +677,14 @@
         function exportLogsCSV() {
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
             if (history.length === 0) { showToast('データがありません'); return; }
-            let csv = "data:text/csv;charset=utf-8,日時,場所,魚種,合計,オス,メス,♂＆♀,なんでも,平均時速\n";
+            let csv = "data:text/csv;charset=utf-8,日時,場所,魚種,合計,オス,メス,♂＆♀,タナゴ,平均時速,休憩時間(分)\n";
             history.forEach(r => {
                 const m = Number(r.counts.male) || 0;
                 const f = Number(r.counts.female) || 0;
                 const o = Number(r.counts.other) || 0;
                 const a = Number(r.counts.any) || 0;
-                csv += `"${r.date}","${r.location}","${r.species}",${r.total},${m},${f},${o},${a},${r.hourlyRate}\n`;
+                const p = r.pauseDurationMinutes || 0;
+                csv += `"${r.date}","${r.location}","${r.species}",${r.total},${m},${f},${o},${a},${r.hourlyRate},${p}\n`;
             });
             const link = document.createElement("a");
             link.setAttribute("href", encodeURI(csv));
@@ -659,6 +700,9 @@
                 hourlyCounts,
                 secondsElapsed,
                 startTimeStamp,
+                firstActionRealTime,
+                pauseStartTimestamp,
+                totalPauseDurationMs,
                 isTimerRunning,
                 hasAlerted2Hours,
                 location: document.getElementById('locationInput').value,
@@ -682,6 +726,9 @@
                     hourlyCounts = data.hourlyCounts || {};
                     secondsElapsed = Number(data.secondsElapsed) || 0;
                     startTimeStamp = data.startTimeStamp || null;
+                    firstActionRealTime = data.firstActionRealTime || null;
+                    pauseStartTimestamp = data.pauseStartTimestamp || null;
+                    totalPauseDurationMs = Number(data.totalPauseDurationMs) || 0;
                     isTimerRunning = data.isTimerRunning || false;
                     hasAlerted2Hours = data.hasAlerted2Hours || false;
                     
