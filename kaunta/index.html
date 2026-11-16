@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>タナゴカウンター - m4a音声対応版</title>
-    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
@@ -35,7 +34,6 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
 
-    <!-- Header Bar -->
     <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3 py-2.5 sticky top-0 z-20 flex items-center justify-between">
         <div class="flex items-center space-x-2">
             <div class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">魚</div>
@@ -53,10 +51,8 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
 
-        <!-- Top Status Card -->
         <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-lg relative">
             <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
                 <div class="flex items-center space-x-2 flex-grow mr-2">
@@ -64,7 +60,6 @@
                     <input type="text" id="locationInput" placeholder="ポイント名・釣り場メモ..." 
                            class="bg-transparent text-sm font-medium focus:outline-none w-full text-slate-200 placeholder-slate-600 border-b border-transparent focus:border-emerald-500 transition">
                 </div>
-                <!-- 五十音順の魚種リスト -->
                 <select id="speciesSelect" class="bg-slate-800 text-xs font-semibold rounded-lg px-2 py-1.5 border border-slate-700 text-emerald-300 focus:outline-none">
                     <option value="タイリクバラタナゴ">タイリクバラタナゴ</option>
                     <option value="アカヒレタビラ">アカヒレタビラ</option>
@@ -114,12 +109,8 @@
             </div>
         </section>
 
-        <!-- Main Tally Counter Display & Digital Buttons -->
         <section class="flex flex-col items-center my-auto w-full">
-            
-            <!-- 上部の3つのデジタルボタン（青・赤・緑） -->
             <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1">
-                <!-- ♂ オスボタン (ブルー) -->
                 <button onclick="incrementCategory('male')" 
                         class="btn-active counter-btn aspect-square bg-gradient-to-br from-blue-900 to-blue-950 border-4 border-blue-600/80 flex flex-col items-center justify-center p-2 text-cyan-300">
                     <span class="text-xs font-black tracking-widest text-cyan-200">♂ MALE</span>
@@ -127,7 +118,6 @@
                     <span class="text-[9px] font-bold text-cyan-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
 
-                <!-- ♀ メスボタン (レッド) -->
                 <button onclick="incrementCategory('female')" 
                         class="btn-active counter-btn aspect-square bg-gradient-to-br from-red-900 to-red-950 border-4 border-red-600/80 flex flex-col items-center justify-center p-2 text-rose-300">
                     <span class="text-xs font-black tracking-widest text-rose-200">♀ FEMALE</span>
@@ -135,7 +125,6 @@
                     <span class="text-[9px] font-bold text-rose-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
 
-                <!-- ♂＆♀ ボタン (グリーン) -->
                 <button onclick="incrementCategory('other')" 
                         class="btn-active counter-btn aspect-square bg-gradient-to-br from-emerald-900 to-emerald-950 border-4 border-emerald-600/80 flex flex-col items-center justify-center p-2 text-emerald-300">
                     <span class="text-xs font-black tracking-widest text-emerald-200">♂&♀ OTHER</span>
@@ -144,7 +133,6 @@
                 </button>
             </div>
 
-            <!-- 下部の大きな丸い独立ボタン（タナゴカウンター） -->
             <div class="relative w-full max-w-[250px] aspect-square my-1 flex items-center justify-center">
                 <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
 
@@ -163,7 +151,6 @@
                 </button>
             </div>
 
-            <!-- Quick Adjust Control -->
             <div class="flex items-center justify-center space-x-3 mt-3 w-full">
                 <button onclick="decrementCounter()" 
                         class="btn-active flex-1 max-w-[130px] bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
@@ -174,10 +161,8 @@
                     ↩ 取り消し
                 </button>
             </div>
-
         </section>
 
-        <!-- Bottom Actions -->
         <section class="grid grid-cols-2 gap-3 mt-1">
             <button onclick="saveCurrentSession()" 
                     class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg">
@@ -191,7 +176,6 @@
 
     </main>
 
-    <!-- Footer Controls -->
     <footer class="bg-slate-900 border-t border-slate-800 py-2 px-4 text-center">
         <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
             <span>タナゴ専用仕様 Final Ver</span>
@@ -201,7 +185,6 @@
         </div>
     </footer>
 
-    <!-- History Modal -->
     <div id="historyModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
             <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between bg-slate-950/50">
@@ -216,14 +199,13 @@
         </div>
     </div>
 
-    <!-- Toast -->
     <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
     <script>
         let counts = { male: 0, female: 0, other: 0, any: 0 };
-        let hourlyCounts = {}; 
+        let hourlyCounts = {};
         let actionHistory = [];
         let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
         let startTimeStamp = null;
@@ -235,11 +217,15 @@
         let wakeLock = null;
         let hasAlerted2Hours = false;
 
-        // m4a音声ファイルの事前ロード（sounds/tanago.m4a）
         const tanagoAudio = new Audio('./sounds/たなごちゃん.m4a');
+        tanagoAudio.preload = 'auto';
+        tanagoAudio.playsInline = true;
+        tanagoAudio.setAttribute('playsinline', '');
+        tanagoAudio.setAttribute('webkit-playsinline', '');
 
         const NORMAL_VOLUME = 0.6;
         const HIGHLIGHT_VOLUME = 1.0;
+        let audioUnlocked = false;
 
         window.onload = () => {
             loadStateFromStorage();
@@ -251,7 +237,27 @@
             }
         };
 
-        // --- Screen Wake Lock API ---
+        async function unlockAudio() {
+            if (audioUnlocked) return true;
+            try {
+                tanagoAudio.muted = true;
+                tanagoAudio.currentTime = 0;
+                await tanagoAudio.play();
+                tanagoAudio.pause();
+                tanagoAudio.currentTime = 0;
+                tanagoAudio.muted = false;
+                audioUnlocked = true;
+                return true;
+            } catch (e) {
+                tanagoAudio.muted = false;
+                return false;
+            }
+        }
+
+        document.addEventListener('pointerdown', () => {
+            unlockAudio();
+        }, { once: true });
+
         async function requestWakeLock() {
             if (!wakeLockEnabled || !('wakeLock' in navigator)) return;
             try {
@@ -298,7 +304,6 @@
             }
         }, { passive: true });
 
-        // --- 音声性別の切り替えボタン ---
         function toggleVoiceGender() {
             const btn = document.getElementById('voiceGenderBtn');
             if (voiceGender === 'female') {
@@ -314,36 +319,15 @@
             }
         }
 
-        // --- m4a音声ファイル再生用関数 ---
-        function playTanagoAudio() {
-            if (!voiceEnabled) return;
-            try {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
-                tanagoAudio.currentTime = 0;
-                tanagoAudio.volume = NORMAL_VOLUME;
-                tanagoAudio.play().catch(e => {});
-            } catch (e) {}
-        }
-
-        // --- 合成音声発声関数（節目時のボリューム一時昇圧対応） ---
         function speakText(textToSpeak, isMilestone = false) {
             if (!voiceEnabled || !('speechSynthesis' in window)) return;
             try {
                 window.speechSynthesis.cancel();
-                
+
                 const utterance = new SpeechSynthesisUtterance(textToSpeak);
                 utterance.lang = 'ja-JP';
-
-                if (voiceGender === 'female') {
-                    utterance.rate = 1.1;
-                    utterance.pitch = 1.4;
-                } else {
-                    utterance.rate = 1.0;
-                    utterance.pitch = 0.85;
-                }
-
+                utterance.rate = voiceGender === 'female' ? 1.1 : 1.0;
+                utterance.pitch = voiceGender === 'female' ? 1.4 : 0.85;
                 utterance.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
 
                 const voices = window.speechSynthesis.getVoices();
@@ -356,15 +340,33 @@
                     }
                 });
 
-                if (targetVoice) {
-                    utterance.voice = targetVoice;
-                }
-
+                if (targetVoice) utterance.voice = targetVoice;
                 window.speechSynthesis.speak(utterance);
             } catch (e) {}
         }
 
-        // --- 節目の音声判定（通常時は m4a、節目時は大音量合成音声） ---
+        async function playTanagoAudio() {
+            if (!voiceEnabled) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                if (!audioUnlocked) {
+                    await unlockAudio();
+                }
+
+                tanagoAudio.pause();
+                tanagoAudio.currentTime = 0;
+                tanagoAudio.volume = NORMAL_VOLUME;
+
+                const playPromise = tanagoAudio.play();
+                if (playPromise) await playPromise;
+            } catch (e) {
+                speakText('たなご');
+            }
+        }
+
         function speakTanagoForTotal(totalCount) {
             let textToSpeak = '';
             let isMilestone = false;
@@ -379,10 +381,9 @@
                 isMilestone = true;
                 const soku = Math.floor(totalCount / 100);
                 const isHan = (totalCount % 100) === 50;
-                
                 const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
                 let sokuStr = '';
-                
+
                 if (soku > 0 && soku <= 10) {
                     sokuStr = numbers[soku] + 'そく';
                 } else if (soku > 10) {
@@ -411,7 +412,6 @@
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
         }
 
-        // --- 開始時刻を起点とした1時間ごとの時間帯キーを生成 ---
         function getElapsedHourRangeKey() {
             if (!firstActionRealTime) {
                 firstActionRealTime = Date.now();
@@ -428,7 +428,6 @@
             return `${startStr}〜${endStr} (${hourIndex + 1}h目)`;
         }
 
-        // --- 個別ボタン（オス・メス・♂＆♀）のカウント処理 ---
         function incrementCategory(category) {
             if (!firstActionRealTime) firstActionRealTime = Date.now();
 
@@ -453,7 +452,6 @@
             saveStateToStorage();
         }
 
-        // --- 下部の「タナゴカウンター」独立ボタンのカウント処理 ---
         function incrementAny() {
             if (!firstActionRealTime) firstActionRealTime = Date.now();
 
@@ -528,7 +526,6 @@
             calculateCatchRate();
         }
 
-        // --- Timer & Rate Logic ---
         function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(); }
         
         function startTimer() {
@@ -611,6 +608,7 @@
             document.getElementById('voiceToggleBtn').innerText = voiceEnabled ? "音声:ON" : "音声:OFF";
             showToast(voiceEnabled ? "音声読み上げ：ON" : "音声読み上げ：OFF");
         }
+
         function toggleVibration() {
             vibrationEnabled = !vibrationEnabled;
             document.getElementById('vibrateToggleBtn').innerText = vibrationEnabled ? "振動:ON" : "振動:OFF";
@@ -690,7 +688,10 @@
             }
             document.getElementById('historyModal').classList.remove('hidden');
         }
-        function closeHistoryModal() { document.getElementById('historyModal').classList.add('hidden'); }
+
+        function closeHistoryModal() {
+            document.getElementById('historyModal').classList.add('hidden');
+        }
 
         function exportLogsCSV() {
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
@@ -749,9 +750,13 @@
                     totalPauseDurationMs = Number(data.totalPauseDurationMs) || 0;
                     isTimerRunning = data.isTimerRunning || false;
                     hasAlerted2Hours = data.hasAlerted2Hours || false;
-                    
+
                     if (data.location) document.getElementById('locationInput').value = data.location;
                     if (data.species) document.getElementById('speciesSelect').value = data.species;
+
+                    if (isTimerRunning && startTimeStamp) {
+                        startTimer();
+                    }
                 } catch (e) {}
             }
         }
@@ -773,7 +778,10 @@
             document.getElementById('toastMsg').innerText = msg;
             t.classList.remove('opacity-0');
             t.classList.add('opacity-100');
-            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
+            setTimeout(() => {
+                t.classList.remove('opacity-100');
+                t.classList.add('opacity-0');
+            }, 2000);
         }
     </script>
 </body>
