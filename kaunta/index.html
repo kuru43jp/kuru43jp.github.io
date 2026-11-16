@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴカウンター - 開始時刻ベース集計版</title>
+    <title>タナゴカウンター - m4a音声対応版</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
@@ -41,7 +41,7 @@
             <div class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">魚</div>
             <div>
                 <h1 class="font-bold text-base leading-tight tracking-wide">タナゴカウンター</h1>
-                <p class="text-[10px] text-slate-400">Digital Counter Edition</p>
+                <p class="text-[10px] text-slate-400">m4a Audio Edition</p>
             </div>
         </div>
         
@@ -227,13 +227,16 @@
         let actionHistory = [];
         let timerInterval = null, secondsElapsed = 0, isTimerRunning = false;
         let startTimeStamp = null;
-        let firstActionRealTime = null; // 最初のカウントまたはタイマー開始時の実時刻を保持
+        let firstActionRealTime = null;
         let pauseStartTimestamp = null;
         let totalPauseDurationMs = 0;
         let voiceEnabled = true, vibrationEnabled = true, wakeLockEnabled = true;
         let voiceGender = 'female';
         let wakeLock = null;
         let hasAlerted2Hours = false;
+
+        // m4a音声ファイルの事前ロード（sounds/tanago.m4a）
+        const tanagoAudio = new Audio('./sounds/tanago.m4a');
 
         const NORMAL_VOLUME = 0.6;
         const HIGHLIGHT_VOLUME = 1.0;
@@ -311,7 +314,20 @@
             }
         }
 
-        // --- 音声発声関数（節目時のボリューム一時昇圧対応） ---
+        // --- m4a音声ファイル再生用関数 ---
+        function playTanagoAudio() {
+            if (!voiceEnabled) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                tanagoAudio.currentTime = 0;
+                tanagoAudio.volume = NORMAL_VOLUME;
+                tanagoAudio.play().catch(e => {});
+            } catch (e) {}
+        }
+
+        // --- 合成音声発声関数（節目時のボリューム一時昇圧対応） ---
         function speakText(textToSpeak, isMilestone = false) {
             if (!voiceEnabled || !('speechSynthesis' in window)) return;
             try {
@@ -348,9 +364,9 @@
             } catch (e) {}
         }
 
-        // --- 節目の音声判定（上3つ ＋ 下のタナゴカウンターの総合計で判定） ---
+        // --- 節目の音声判定（通常時は m4a、節目時は大音量合成音声） ---
         function speakTanagoForTotal(totalCount) {
-            let textToSpeak = 'たなごちゃんです';
+            let textToSpeak = '';
             let isMilestone = false;
 
             if (totalCount === 503) {
@@ -384,23 +400,25 @@
                 }
             }
 
-            speakText(textToSpeak, isMilestone);
+            if (isMilestone) {
+                speakText(textToSpeak, true);
+            } else {
+                playTanagoAudio();
+            }
         }
 
         function triggerVibration() {
             if (vibrationEnabled && navigator.vibrate) navigator.vibrate(40);
         }
 
-        // --- 開始時刻（例: 18:15）を起点とした1時間ごとの時間帯キーを生成 ---
+        // --- 開始時刻を起点とした1時間ごとの時間帯キーを生成 ---
         function getElapsedHourRangeKey() {
             if (!firstActionRealTime) {
                 firstActionRealTime = Date.now();
             }
-            // 経過した実時間（秒）をベースに何時間目かを算出
             const elapsedSecondsFromStart = Math.floor((Date.now() - firstActionRealTime) / 1000);
             const hourIndex = Math.floor(elapsedSecondsFromStart / 3600);
 
-            // 開始実時刻に何時間分かを足して「18:15〜19:15」のようなフォーマットを作る
             const blockStartTime = new Date(firstActionRealTime + (hourIndex * 3600 * 1000));
             const blockEndTime = new Date(firstActionRealTime + ((hourIndex + 1) * 3600 * 1000));
 
@@ -429,7 +447,7 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanagoForTotal(total); // 総合計で節目判定
+            speakTanagoForTotal(total);
             triggerVibration();
             updateUI();
             saveStateToStorage();
@@ -454,7 +472,7 @@
             const total = getTotalCount();
             if (!isTimerRunning && total === 1) startTimer();
 
-            speakTanagoForTotal(total); // 総合計で節目判定
+            speakTanagoForTotal(total);
             triggerVibration();
             updateUI();
             saveStateToStorage();
