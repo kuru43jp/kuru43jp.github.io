@@ -225,11 +225,19 @@
         let wakeLock = null;
         let hasAlerted2Hours = false;
 
-        const tanagoAudio = new Audio('./sounds/たなごちゃん.m4a');
-        tanagoAudio.preload = 'auto';
-        tanagoAudio.playsInline = true;
-        tanagoAudio.setAttribute('playsinline', '');
-        tanagoAudio.setAttribute('webkit-playsinline', '');
+        // --- 複数チャンネル（音声プール）による連打対策 ---
+        const AUDIO_POOL_SIZE = 4;
+        const tanagoAudioPool = [];
+        let audioPoolIndex = 0;
+
+        for (let i = 0; i < AUDIO_POOL_SIZE; i++) {
+            const audio = new Audio('./sounds/たなごちゃん.m4a');
+            audio.preload = 'auto';
+            audio.playsInline = true;
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+            tanagoAudioPool.push(audio);
+        }
 
         const NORMAL_VOLUME = 0.6;
         const HIGHLIGHT_VOLUME = 1.0;
@@ -248,16 +256,18 @@
         async function unlockAudio() {
             if (audioUnlocked) return true;
             try {
-                tanagoAudio.muted = true;
-                tanagoAudio.currentTime = 0;
-                await tanagoAudio.play();
-                tanagoAudio.pause();
-                tanagoAudio.currentTime = 0;
-                tanagoAudio.muted = false;
+                for (let audio of tanagoAudioPool) {
+                    audio.muted = true;
+                    audio.currentTime = 0;
+                    await audio.play();
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.muted = false;
+                }
                 audioUnlocked = true;
                 return true;
             } catch (e) {
-                tanagoAudio.muted = false;
+                tanagoAudioPool.forEach(audio => audio.muted = false);
                 return false;
             }
         }
@@ -353,7 +363,7 @@
             } catch (e) {}
         }
 
-        // 複数・連続タップ対応（強制頭出し＆リセット再生）
+        // 複数チャンネルによる確実な音声再生（連打・同時押し対応）
         async function playTanagoAudio() {
             if (!voiceEnabled) return;
             try {
@@ -365,11 +375,14 @@
                     await unlockAudio();
                 }
 
-                tanagoAudio.pause();
-                tanagoAudio.currentTime = 0;
-                tanagoAudio.volume = NORMAL_VOLUME;
+                const audio = tanagoAudioPool[audioPoolIndex];
+                audioPoolIndex = (audioPoolIndex + 1) % AUDIO_POOL_SIZE;
 
-                const playPromise = tanagoAudio.play();
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = NORMAL_VOLUME;
+
+                const playPromise = audio.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(error => {
                         speakText('たなご');
