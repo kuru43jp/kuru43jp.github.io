@@ -156,7 +156,7 @@
                 </button>
             </div>
 
-            <!-- Quick Adjust Control (直近を1減らすボタンの代わりに「リセット」ボタンを配置) -->
+            <!-- Quick Adjust Control (直近を1減らす ＆ リセットボタン) -->
             <div class="flex items-center justify-center space-x-3 mt-2 w-full">
                 <button onclick="decrementCounter()" 
                         class="btn-active flex-1 max-w-[150px] bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2 px-3 rounded-xl text-xs font-bold shadow">
@@ -353,6 +353,7 @@
             } catch (e) {}
         }
 
+        // 複数・連続タップ対応（強制頭出し＆リセット再生）
         async function playTanagoAudio() {
             if (!voiceEnabled) return;
             try {
@@ -369,7 +370,11 @@
                 tanagoAudio.volume = NORMAL_VOLUME;
 
                 const playPromise = tanagoAudio.play();
-                if (playPromise) await playPromise;
+                if (playPromise !== undefined) {
+                    playPromise.catch(error => {
+                        speakText('たなご');
+                    });
+                }
             } catch (e) {
                 speakText('たなご');
             }
