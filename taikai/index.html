@@ -3,12 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>タナゴ釣り大会 カウンター（スリープボタン付き）</title>
+    <title>タナゴ釣り大会 カウンター（音声読み上げ・スリープボタン付き）</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
         body { font-family: 'Noto Sans JP', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
-        .btn-active:active { transform: scale(0.96); }
+        .btn-active:active { transform: scale(0.95); }
+        .counter-circle {
+            border-radius: 9999px;
+            box-shadow: 0 12px 28px -6px rgba(16, 185, 129, 0.35), inset 0 2px 6px rgba(255, 255, 255, 0.25);
+            transition: transform 0.1s ease, filter 0.1s ease;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.96); opacity: 0.7; }
+            50% { transform: scale(1.03); opacity: 0.3; }
+            100% { transform: scale(0.96); opacity: 0.7; }
+        }
+        .pulse-effect {
+            animation: pulse-ring 3s infinite ease-in-out;
+        }
     </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white relative">
@@ -42,6 +55,7 @@
             </div>
         </div>
         <div class="flex items-center space-x-1">
+            <button onclick="toggleVoice()" id="voiceToggleBtn" class="px-2 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[10px] font-bold shadow">🔊音声:ON</button>
             <button onclick="goToAppSleep()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 text-[10px] font-bold shadow" title="画面を暗くして省電力">🌙スリープ</button>
             <button onclick="toggleWakeLock()" id="wakeLockToggleBtn" class="px-2 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[10px] font-bold shadow">💡常時点灯ON</button>
             <button onclick="toggleScreenLock()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-[10px] font-bold shadow">🔒</button>
@@ -71,33 +85,23 @@
                 <button onclick="changeAssignedParticipant()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold">名前変更</button>
             </section>
 
-            <section class="flex flex-col items-center my-auto w-full space-y-3">
-                <div class="text-center">
-                    <span class="text-xs text-slate-400">総釣果</span>
-                    <div id="activeTotalDisplay" class="text-6xl font-black text-emerald-400">0 <span class="text-sm font-normal text-slate-400">匹</span></div>
-                </div>
-
-                <!-- 3つの独立したカウントボタン -->
-                <div class="grid grid-cols-3 gap-2 w-full">
-                    <button onclick="incrementGender('male')" class="btn-active bg-blue-950/50 hover:bg-blue-900/50 border border-blue-800/60 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
-                        <span class="text-xs font-bold text-blue-300">♂ オス追加</span>
-                        <span id="activeMaleCount" class="text-3xl font-black text-blue-400 mt-1">0</span>
-                    </button>
-                    <button onclick="incrementGender('female')" class="btn-active bg-pink-950/50 hover:bg-pink-900/50 border border-pink-800/60 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
-                        <span class="text-xs font-bold text-pink-300">♀ メス追加</span>
-                        <span id="activeFemaleCount" class="text-3xl font-black text-pink-400 mt-1">0</span>
-                    </button>
-                    <button onclick="incrementGender('unknown')" class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 rounded-2xl p-4 flex flex-col items-center justify-center shadow">
-                        <span class="text-xs font-bold text-slate-300">雑魚</span>
-                        <span id="activeUnknownCount" class="text-3xl font-black text-slate-100 mt-1">0</span>
+            <!-- 中央の丸いカウントボタン -->
+            <section class="flex flex-col items-center justify-center my-auto w-full space-y-4">
+                <div class="relative w-56 h-56 flex items-center justify-center">
+                    <div class="absolute inset-0 rounded-full bg-emerald-500/15 border border-emerald-400/30 pulse-effect pointer-events-none"></div>
+                    <button id="mainCircleBtn" onclick="incrementCount()"
+                            class="btn-active counter-circle w-full h-full bg-gradient-to-br from-emerald-500 via-emerald-600 to-teal-800 border-4 border-emerald-300/70 text-slate-950 flex flex-col items-center justify-center select-none active:brightness-110">
+                        <span class="text-xs font-black tracking-widest uppercase text-emerald-950/90 mb-1">TAP TO COUNT</span>
+                        <span id="activeTotalDisplay" class="text-6xl font-mono font-black text-white drop-shadow-[0_2px_8px_rgba(0,0,0,0.45)]">0</span>
+                        <span class="text-xs font-extrabold text-emerald-100 mt-1 bg-slate-950/35 px-3 py-0.5 rounded-full">匹</span>
                     </button>
                 </div>
 
                 <!-- マイナス調整ボタン -->
-                <div class="flex items-center justify-center space-x-2 w-full pt-2">
-                    <button onclick="decrementGender('male')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-blue-300 py-2.5 rounded-xl text-xs font-bold">♂ -1</button>
-                    <button onclick="decrementGender('female')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-pink-300 py-2.5 rounded-xl text-xs font-bold">♀ -1</button>
-                    <button onclick="decrementGender('unknown')" class="flex-1 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 rounded-xl text-xs font-bold">雑魚 -1</button>
+                <div class="flex items-center justify-center w-full max-w-xs pt-1">
+                    <button onclick="decrementCount()" class="btn-active w-full bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                        ➖ 1減らす (-1)
+                    </button>
                 </div>
             </section>
 
@@ -128,7 +132,7 @@
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-emerald-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
@@ -140,22 +144,215 @@
         let wakeLock = null;
         let isWakeLockEnabled = true;
 
+        // 音声読み上げ関連の設定
+        let voiceEnabled = true;
+        const NORMAL_VOLUME = 0.6;
+        const HIGHLIGHT_VOLUME = 1.0;
+        const AUDIO_POOL_SIZE = 4;
+
+        const SOUND_FILES = {
+            normal: './sounds/たなごちゃん.m4a',
+            katame: './sounds/katame.m4a',
+            ryome: './sounds/ryome.m4a',
+            tsunuke: './sounds/tsunuke.m4a',
+            '1soku': './sounds/1soku.m4a'
+        };
+
+        const audioPools = {};
+        const poolIndices = {};
+        let audioUnlocked = false;
+
+        function createAudioInstance(src) {
+            const audio = new Audio(src);
+            audio.preload = 'auto';
+            audio.playsInline = true;
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+            return audio;
+        }
+
+        function initAudioPools() {
+            Object.keys(SOUND_FILES).forEach((key) => {
+                audioPools[key] = [];
+                poolIndices[key] = 0;
+                for (let i = 0; i < AUDIO_POOL_SIZE; i++) {
+                    audioPools[key].push(createAudioInstance(SOUND_FILES[key]));
+                }
+            });
+        }
+
+        initAudioPools();
+
+        async function unlockAudio() {
+            if (audioUnlocked) return true;
+            try {
+                for (const key of Object.keys(audioPools)) {
+                    const pool = audioPools[key];
+                    if (!pool || pool.length === 0) continue;
+                    const audio = pool[0];
+                    audio.muted = true;
+                    audio.currentTime = 0;
+                    try {
+                        await audio.play();
+                        audio.pause();
+                        audio.currentTime = 0;
+                    } catch (innerErr) {
+                        // 個別ファイルの読み込みエラーでも他のキーの解錠を続行
+                    } finally {
+                        audio.muted = false;
+                    }
+                }
+                audioUnlocked = true;
+                return true;
+            } catch (e) {
+                Object.values(audioPools).forEach(pool => {
+                    pool.forEach(audio => audio.muted = false);
+                });
+                return false;
+            }
+        }
+
+        document.addEventListener('pointerdown', () => {
+            unlockAudio();
+        }, { once: true });
+
+        function toggleVoice() {
+            voiceEnabled = !voiceEnabled;
+            const btn = document.getElementById('voiceToggleBtn');
+            if (voiceEnabled) {
+                btn.innerText = "🔊音声:ON";
+                btn.className = "px-2 py-1.5 rounded-lg bg-emerald-950/80 border border-emerald-700/60 text-emerald-300 text-[10px] font-bold shadow";
+                showToast("音声読み上げ：ON");
+            } else {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+                btn.innerText = "🔇音声:OFF";
+                btn.className = "px-2 py-1.5 rounded-lg bg-slate-800 border border-slate-700 text-slate-400 text-[10px] font-bold shadow";
+                showToast("音声読み上げ：OFF");
+            }
+        }
+
+        function speakText(textToSpeak, isMilestone = false) {
+            if (!voiceEnabled || !('speechSynthesis' in window)) return;
+            try {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(textToSpeak);
+                utterance.lang = 'ja-JP';
+                utterance.rate = 1.1;
+                utterance.pitch = 1.3;
+                utterance.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
+                window.speechSynthesis.speak(utterance);
+            } catch (e) {}
+        }
+
+        async function playSoundKey(key, isMilestone = false, fallbackText = 'たなご', fallbackKey = 'normal') {
+            if (!voiceEnabled) return;
+            try {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                }
+
+                if (!audioUnlocked) {
+                    await unlockAudio();
+                }
+
+                const pool = audioPools[key];
+                if (!pool || pool.length === 0) {
+                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                        return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                    }
+                    speakText(fallbackText, isMilestone);
+                    return;
+                }
+
+                const idx = poolIndices[key] || 0;
+                const audio = pool[idx];
+                poolIndices[key] = (idx + 1) % AUDIO_POOL_SIZE;
+
+                if (audio.error) {
+                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                        return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                    }
+                    speakText(fallbackText, isMilestone);
+                    return;
+                }
+
+                if (audio.readyState === 0) {
+                    audio.load();
+                }
+
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
+
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        if (key !== fallbackKey && audioPools[fallbackKey]) {
+                            playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                        } else {
+                            speakText(fallbackText, isMilestone);
+                        }
+                    });
+                }
+            } catch (e) {
+                speakText(fallbackText, isMilestone);
+            }
+        }
+
+        function speakTanagoForTotal(totalCount) {
+            if (!voiceEnabled) return;
+
+            if (totalCount === 1) {
+                playSoundKey('katame', true, 'かためです', 'normal');
+                return;
+            }
+            if (totalCount === 2) {
+                playSoundKey('ryome', true, 'りょうめです', 'normal');
+                return;
+            }
+            if (totalCount === 10) {
+                playSoundKey('tsunuke', true, 'つぬけです', 'normal');
+                return;
+            }
+            if (totalCount === 100) {
+                playSoundKey('1soku', true, '1そくです', 'normal');
+                return;
+            }
+            if (totalCount === 503) {
+                speakText('ごー丸さんです', true);
+                return;
+            }
+            if (totalCount >= 150 && totalCount % 50 === 0) {
+                const soku = Math.floor(totalCount / 100);
+                const isHan = (totalCount % 100) === 50;
+                const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+                const sokuStr = soku <= 10 ? numbers[soku] + 'そく' : soku + 'そく';
+                const textToSpeak = isHan ? `${sokuStr}はんです` : `${sokuStr}です`;
+                speakText(textToSpeak, true);
+                return;
+            }
+
+            playSoundKey('normal', false, 'たなご', 'normal');
+        }
+
         window.onload = () => {
             checkTerminalSetup();
             requestWakeLock();
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.getVoices();
+            }
         };
 
-        // アプリ内スリープ（画面暗転）へ移行
         function goToAppSleep() {
             document.getElementById('appSleepOverlay').classList.remove('hidden');
         }
 
-        // アプリ内スリープから復帰
         function wakeUpApp() {
             document.getElementById('appSleepOverlay').classList.add('hidden');
         }
 
-        // スリープ防止のON/OFF切り替え
         async function toggleWakeLock() {
             if (isWakeLockEnabled) {
                 if (wakeLock !== null) {
@@ -268,6 +465,8 @@
                     counts: { male: 0, female: 0, unknown: 0 }
                 });
                 saveToCloud();
+            } else if (!p.counts) {
+                p.counts = { male: 0, female: 0, unknown: 0 };
             }
         }
 
@@ -276,6 +475,8 @@
             if (!p) {
                 p = { name: assignedName, counts: { male: 0, female: 0, unknown: 0 } };
                 tournamentData.participants.push(p);
+            } else if (!p.counts) {
+                p.counts = { male: 0, female: 0, unknown: 0 };
             }
             return p;
         }
@@ -288,7 +489,7 @@
                 if (data && Array.isArray(data)) {
                     tournamentData.participants = data.map(item => ({
                         name: item.name,
-                        counts: item.counts
+                        counts: item.counts || { male: 0, female: 0, unknown: 0 }
                     }));
                 }
                 ensureAssignedInCloud();
@@ -313,34 +514,40 @@
             }
         }
 
-        function incrementGender(gender) {
+        function incrementCount() {
             const p = getMyParticipant();
-            p.counts[gender]++;
+            p.counts.unknown = (p.counts.unknown || 0) + 1;
+            const total = getTotalCount(p);
+            saveToCloud();
+            updateUI();
+            speakTanagoForTotal(total);
+            if ('vibrate' in navigator) navigator.vibrate(30);
+        }
+
+        function decrementCount() {
+            const p = getMyParticipant();
+            if ((p.counts.unknown || 0) > 0) {
+                p.counts.unknown--;
+            } else if ((p.counts.female || 0) > 0) {
+                p.counts.female--;
+            } else if ((p.counts.male || 0) > 0) {
+                p.counts.male--;
+            } else {
+                return;
+            }
             saveToCloud();
             updateUI();
             if ('vibrate' in navigator) navigator.vibrate(30);
         }
 
-        function decrementGender(gender) {
-            const p = getMyParticipant();
-            if (p.counts[gender] > 0) {
-                p.counts[gender]--;
-                saveToCloud();
-                updateUI();
-                if ('vibrate' in navigator) navigator.vibrate(30);
-            }
-        }
-
         function getTotalCount(p) {
+            if (!p || !p.counts) return 0;
             return (p.counts.male || 0) + (p.counts.female || 0) + (p.counts.unknown || 0);
         }
 
         function updateUI() {
             const p = getMyParticipant();
-            document.getElementById('activeMaleCount').innerText = p.counts.male;
-            document.getElementById('activeFemaleCount').innerText = p.counts.female;
-            document.getElementById('activeUnknownCount').innerText = p.counts.unknown;
-            document.getElementById('activeTotalDisplay').innerHTML = getTotalCount(p) + ` <span class="text-sm font-normal text-slate-400">匹</span>`;
+            document.getElementById('activeTotalDisplay').innerText = getTotalCount(p);
         }
 
         async function openRankingModal() {
@@ -360,10 +567,7 @@
                         <div class="bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center justify-between text-xs">
                             <div class="flex items-center space-x-3">
                                 <span class="text-base w-6 text-center ${rankClass}">#${index + 1}</span>
-                                <div>
-                                    <div class="font-bold text-slate-200 text-sm">${p.name}</div>
-                                    <div class="text-slate-400">♂ ${p.counts.male} / ♀ ${p.counts.female} / 雑魚 ${p.counts.unknown}</div>
-                                </div>
+                                <div class="font-bold text-slate-200 text-sm">${p.name}</div>
                             </div>
                             <div class="text-right">
                                 <span class="text-lg font-black text-emerald-400">${total}</span><span class="text-slate-400 text-[10px]"> 匹</span>
