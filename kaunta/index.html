@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>タナゴカウンター - m4a音声対応版</title>
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap');
@@ -11,6 +12,7 @@
             font-family: 'Noto Sans JP', sans-serif;
             touch-action: manipulation;
             -webkit-tap-highlight-color: transparent;
+            overflow: hidden;
         }
         .btn-active:active {
             transform: scale(0.95);
@@ -19,7 +21,7 @@
             position: relative;
             border-radius: 9999px;
             overflow: hidden;
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 20px -4px rgba(0, 0, 0, 0.5), inset 0 2px 4px rgba(255, 255, 255, 0.2);
             transition: transform 0.1s ease;
         }
         @keyframes pulse-ring {
@@ -32,35 +34,38 @@
         }
     </style>
 </head>
-<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
+<body class="bg-slate-950 text-slate-100 h-screen flex flex-col justify-between selection:bg-emerald-500 selection:text-white" id="appBody">
 
-    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3 py-2.5 sticky top-0 z-20 flex items-center justify-between">
+    <!-- Header Bar -->
+    <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-3 py-2 sticky top-0 z-20 flex items-center justify-between">
         <div class="flex items-center space-x-2">
             <div class="bg-emerald-500 text-slate-950 p-1.5 rounded-lg font-black text-xs">魚</div>
             <div>
-                <h1 class="font-bold text-base leading-tight tracking-wide">タナゴカウンター</h1>
-                <p class="text-[10px] text-slate-400">m4a Audio Edition</p>
+                <h1 class="font-bold text-sm leading-tight tracking-wide">タナゴカウンター</h1>
+                <p class="text-[9px] text-slate-400">m4a Audio Edition</p>
             </div>
         </div>
         
-        <div class="flex items-center space-x-1.5">
-            <button id="wakeLockToggleBtn" onclick="toggleWakeLock()" class="px-2 py-1.5 rounded-lg bg-emerald-600 text-white transition text-[11px] font-bold shadow" title="常時消灯防止">消灯:ON</button>
-            <button id="voiceGenderBtn" onclick="toggleVoiceGender()" class="px-2 py-1.5 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[11px] font-bold">声:女性</button>
-            <button id="voiceToggleBtn" onclick="toggleVoice()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[11px] font-bold">音声:ON</button>
-            <button id="vibrateToggleBtn" onclick="toggleVibration()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[11px] font-bold">振動:ON</button>
+        <div class="flex items-center space-x-1">
+            <button id="wakeLockToggleBtn" onclick="toggleWakeLock()" class="px-2 py-1 rounded-lg bg-emerald-600 text-white transition text-[10px] font-bold shadow" title="常時消灯防止">消灯:ON</button>
+            <button id="voiceGenderBtn" onclick="toggleVoiceGender()" class="px-2 py-1 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[10px] font-bold">声:女性</button>
+            <button id="voiceToggleBtn" onclick="toggleVoice()" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[10px] font-bold">音声:ON</button>
+            <button id="vibrateToggleBtn" onclick="toggleVibration()" class="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-400 transition text-[10px] font-bold">振動:ON</button>
         </div>
     </header>
 
-    <main class="flex-grow max-w-md w-full mx-auto px-4 py-4 flex flex-col justify-between gap-4">
+    <!-- Main Container -->
+    <main class="flex-grow max-w-md w-full mx-auto px-3 py-2 flex flex-col justify-between gap-2 overflow-hidden">
 
-        <section class="bg-slate-900 rounded-2xl p-4 border border-slate-800 shadow-lg relative">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-3">
+        <!-- Top Status Card -->
+        <section class="bg-slate-900 rounded-xl p-3 border border-slate-800 shadow-lg relative">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-1.5 mb-2">
                 <div class="flex items-center space-x-2 flex-grow mr-2">
-                    <span class="text-emerald-400 text-sm">📍</span>
+                    <span class="text-emerald-400 text-xs">📍</span>
                     <input type="text" id="locationInput" placeholder="ポイント名・釣り場メモ..." 
-                           class="bg-transparent text-sm font-medium focus:outline-none w-full text-slate-200 placeholder-slate-600 border-b border-transparent focus:border-emerald-500 transition">
+                           class="bg-transparent text-xs font-medium focus:outline-none w-full text-slate-200 placeholder-slate-600 border-b border-transparent focus:border-emerald-500 transition">
                 </div>
-                <select id="speciesSelect" class="bg-slate-800 text-xs font-semibold rounded-lg px-2 py-1.5 border border-slate-700 text-emerald-300 focus:outline-none">
+                <select id="speciesSelect" class="bg-slate-800 text-[11px] font-semibold rounded-lg px-2 py-1 border border-slate-700 text-emerald-300 focus:outline-none">
                     <option value="タイリクバラタナゴ">タイリクバラタナゴ</option>
                     <option value="アカヒレタビラ">アカヒレタビラ</option>
                     <option value="アブラボテ">アブラボテ</option>
@@ -81,107 +86,99 @@
                 </select>
             </div>
 
-            <div class="grid grid-cols-3 gap-2 text-center">
-                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">経過時間</span>
-                    <span id="timerDisplay" class="font-mono text-base font-bold text-slate-100">00:00:00</span>
-                    <div class="mt-1 flex justify-center space-x-1">
-                        <button id="startTimerBtn" onclick="toggleTimer()" class="text-[10px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">開始</button>
-                        <button onclick="resetTimer()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
+            <div class="grid grid-cols-2 gap-2 text-center">
+                <div class="bg-slate-950/60 rounded-lg p-2 border border-slate-800">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">経過時間</span>
+                    <span id="timerDisplay" class="font-mono text-sm font-bold text-slate-100">00:00:00</span>
+                    <div class="mt-0.5 flex justify-center space-x-1">
+                        <button id="startTimerBtn" onclick="toggleTimer()" class="text-[9px] bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-0.5 rounded font-bold">開始</button>
+                        <button onclick="resetTimer()" class="text-[9px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">RST</button>
                     </div>
                 </div>
 
-                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 flex flex-col justify-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
+                <div class="bg-slate-950/60 rounded-lg p-2 border border-slate-800 flex flex-col justify-center">
+                    <span class="text-[9px] uppercase font-bold text-slate-400 block mb-0.5">時速 (経過時間基準)</span>
                     <div class="flex items-baseline justify-center">
-                        <span id="catchRateDisplay" class="text-xl font-extrabold text-amber-400">0.0</span>
-                        <span class="text-[10px] text-slate-400 ml-0.5">匹/h</span>
-                    </div>
-                </div>
-
-                <div class="bg-slate-950/60 rounded-xl p-2.5 border border-slate-800 flex flex-col justify-center">
-                    <span class="text-[10px] uppercase font-bold text-slate-400 block mb-0.5">合計</span>
-                    <div class="flex items-baseline justify-center">
-                        <span id="totalCatchDisplay" class="text-2xl font-black text-emerald-400">0</span>
-                        <span class="text-[10px] text-slate-400 ml-0.5">匹</span>
+                        <span id="catchRateDisplay" class="text-lg font-extrabold text-amber-400">0.0</span>
+                        <span class="text-[9px] text-slate-400 ml-0.5">匹/h</span>
                     </div>
                 </div>
             </div>
         </section>
 
-        <section class="flex flex-col items-center my-auto w-full">
-            <div class="grid grid-cols-3 gap-3 w-full mb-4 px-1">
+        <!-- Main Tally Counter Display & Digital Buttons -->
+        <section class="flex flex-col items-center justify-center my-auto w-full">
+            
+            <div class="grid grid-cols-3 gap-2 w-full mb-3 px-1">
                 <button onclick="incrementCategory('male')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-blue-900 to-blue-950 border-4 border-blue-600/80 flex flex-col items-center justify-center p-2 text-cyan-300">
-                    <span class="text-xs font-black tracking-widest text-cyan-200">♂ MALE</span>
-                    <span id="maleCountBadge" class="text-3xl font-mono font-black text-cyan-400 my-1 drop-shadow-[0_0_8px_rgba(34,211,238,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-cyan-300/80 tracking-wider">TAP TO COUNT</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-blue-900 to-blue-950 border-3 border-blue-600/80 flex flex-col items-center justify-center p-1.5 text-cyan-300 max-h-[90px]">
+                    <span class="text-[10px] font-black tracking-widest text-cyan-200">♂ MALE</span>
+                    <span id="maleCountBadge" class="text-2xl font-mono font-black text-cyan-400 my-0.5 drop-shadow-[0_0_6px_rgba(34,211,238,0.6)]">000</span>
+                    <span class="text-[8px] font-bold text-cyan-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
 
                 <button onclick="incrementCategory('female')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-red-900 to-red-950 border-4 border-red-600/80 flex flex-col items-center justify-center p-2 text-rose-300">
-                    <span class="text-xs font-black tracking-widest text-rose-200">♀ FEMALE</span>
-                    <span id="femaleCountBadge" class="text-3xl font-mono font-black text-rose-400 my-1 drop-shadow-[0_0_8px_rgba(251,113,133,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-rose-300/80 tracking-wider">TAP TO COUNT</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-red-900 to-red-950 border-3 border-red-600/80 flex flex-col items-center justify-center p-1.5 text-rose-300 max-h-[90px]">
+                    <span class="text-[10px] font-black tracking-widest text-rose-200">♀ FEMALE</span>
+                    <span id="femaleCountBadge" class="text-2xl font-mono font-black text-rose-400 my-0.5 drop-shadow-[0_0_6px_rgba(251,113,133,0.6)]">000</span>
+                    <span class="text-[8px] font-bold text-rose-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
 
                 <button onclick="incrementCategory('other')" 
-                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-emerald-900 to-emerald-950 border-4 border-emerald-600/80 flex flex-col items-center justify-center p-2 text-emerald-300">
-                    <span class="text-xs font-black tracking-widest text-emerald-200">♂&♀ OTHER</span>
-                    <span id="otherCountBadge" class="text-3xl font-mono font-black text-emerald-400 my-1 drop-shadow-[0_0_8px_rgba(52,211,153,0.6)]">000</span>
-                    <span class="text-[9px] font-bold text-emerald-300/80 tracking-wider">TAP TO COUNT</span>
+                        class="btn-active counter-btn aspect-square bg-gradient-to-br from-emerald-900 to-emerald-950 border-3 border-emerald-600/80 flex flex-col items-center justify-center p-1.5 text-emerald-300 max-h-[90px]">
+                    <span class="text-[10px] font-black tracking-widest text-emerald-200">♂&♀ OTHER</span>
+                    <span id="otherCountBadge" class="text-2xl font-mono font-black text-emerald-400 my-0.5 drop-shadow-[0_0_6px_rgba(52,211,153,0.6)]">000</span>
+                    <span class="text-[8px] font-bold text-emerald-300/80 tracking-wider">TAP TO COUNT</span>
                 </button>
             </div>
 
-            <div class="relative w-full max-w-[250px] aspect-square my-1 flex items-center justify-center">
+            <div class="relative w-full max-w-[210px] aspect-square my-0.5 flex items-center justify-center">
                 <div class="absolute inset-0 rounded-full bg-amber-500/10 border border-amber-500/20 pulse-effect pointer-events-none"></div>
 
                 <button id="mainCounterBtn" onclick="incrementAny()" 
-                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-yellow-900 text-slate-950 font-black shadow-2xl border-4 border-amber-300/60 flex flex-col items-center justify-center relative active:brightness-110 select-none">
-                    <span class="text-[10px] uppercase tracking-widest font-bold text-amber-200 mb-0.5">タナゴカウンター</span>
-                    <div class="text-[11px] font-bold text-amber-100 space-x-1.5 mb-0.5 bg-slate-950/40 px-3 py-0.5 rounded-full border border-amber-500/30">
+                        class="btn-active w-full h-full rounded-full bg-gradient-to-br from-amber-600 via-amber-700 to-yellow-900 text-slate-950 font-black shadow-xl border-3 border-amber-300/60 flex flex-col items-center justify-center relative active:brightness-110 select-none">
+                    <span class="text-[9px] uppercase tracking-widest font-bold text-amber-200 mb-0.5">タナゴカウンター</span>
+                    <div class="text-[10px] font-bold text-amber-100 space-x-1 mb-0.5 bg-slate-950/40 px-2.5 py-0.5 rounded-full border border-amber-500/30">
                         <span>♂:<span id="subMaleNum">0</span></span>
                         <span>♀:<span id="subFemaleNum">0</span></span>
                         <span>他:<span id="subOtherNum">0</span></span>
                     </div>
-                    <span id="giantCountNumber" class="text-6xl font-mono font-black tracking-tight text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.8)]">000</span>
-                    <span class="mt-1 text-[10px] font-bold bg-slate-950/40 text-amber-200 px-3 py-0.5 rounded-full backdrop-blur-sm">
+                    <span id="giantCountNumber" class="text-5xl font-mono font-black tracking-tight text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)]">000</span>
+                    <span class="mt-0.5 text-[9px] font-bold bg-slate-950/40 text-amber-200 px-2.5 py-0.5 rounded-full backdrop-blur-sm">
                         TAP TO COUNT
                     </span>
                 </button>
             </div>
 
-            <div class="flex items-center justify-center space-x-3 mt-3 w-full">
+            <div class="flex items-center justify-center space-x-3 mt-2 w-full">
                 <button onclick="decrementCounter()" 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
+                        class="btn-active flex-1 max-w-[150px] bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2 px-3 rounded-xl text-xs font-bold shadow">
                     ➖ 直近を1減らす (-1)
                 </button>
-                <button onclick="undoLastAction()" id="undoBtn" disabled 
-                        class="btn-active flex-1 max-w-[130px] bg-slate-900 disabled:opacity-40 hover:bg-slate-800 border border-slate-800 text-slate-300 py-2.5 px-4 rounded-xl text-xs font-bold shadow">
-                    ↩ 取り消し
+                <button onclick="confirmResetAll()" 
+                        class="btn-active flex-1 max-w-[150px] bg-rose-950/60 hover:bg-rose-900/60 border border-rose-800/60 text-rose-300 py-2 px-3 rounded-xl text-xs font-bold shadow">
+                    🗑️ リセット
                 </button>
             </div>
+
         </section>
 
-        <section class="grid grid-cols-2 gap-3 mt-1">
+        <section class="grid grid-cols-2 gap-2 mt-1">
             <button onclick="saveCurrentSession()" 
-                    class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 px-4 rounded-xl text-sm shadow-lg">
+                    class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-3 rounded-xl text-xs shadow-lg">
                 💾 釣果ログに保存
             </button>
             <button onclick="openHistoryModal()" 
-                    class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-3 px-4 rounded-xl text-sm shadow">
+                    class="btn-active bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 font-bold py-2.5 px-3 rounded-xl text-xs shadow">
                 📖 履歴・記録一覧
             </button>
         </section>
 
     </main>
 
-    <footer class="bg-slate-900 border-t border-slate-800 py-2 px-4 text-center">
-        <div class="max-w-md mx-auto flex items-center justify-between text-xs text-slate-500">
-            <span>タナゴ専用仕様 Final Ver</span>
-            <button onclick="confirmResetAll()" class="text-rose-400 hover:text-rose-300 font-medium">
-                🗑️ カウンター初期化
-            </button>
+    <footer class="bg-slate-900 border-t border-slate-800 py-1.5 px-4 text-center">
+        <div class="max-w-md mx-auto text-[10px] text-slate-500">
+            タナゴ専用仕様 Final Ver
         </div>
     </footer>
 
@@ -199,7 +196,7 @@
         </div>
     </div>
 
-    <div id="toast" class="fixed bottom-16 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-2 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
+    <div id="toast" class="fixed bottom-12 left-1/2 transform -translate-x-1/2 bg-slate-900 text-emerald-400 border border-slate-800 px-4 py-1.5 rounded-full text-xs font-bold shadow-xl transition-opacity duration-300 opacity-0 pointer-events-none z-50">
         <span id="toastMsg">通知</span>
     </div>
 
@@ -217,15 +214,47 @@
         let wakeLock = null;
         let hasAlerted2Hours = false;
 
-        const tanagoAudio = new Audio('./sounds/たなごちゃん.m4a');
-        tanagoAudio.preload = 'auto';
-        tanagoAudio.playsInline = true;
-        tanagoAudio.setAttribute('playsinline', '');
-        tanagoAudio.setAttribute('webkit-playsinline', '');
-
         const NORMAL_VOLUME = 0.6;
         const HIGHLIGHT_VOLUME = 1.0;
+        const AUDIO_POOL_SIZE = 4;
+
+        // 音声ファイルを使用する項目の定義（150匹目まで）
+        const SOUND_FILES = {
+            normal: './sounds/たなごちゃん.m4a',
+            start: './sounds/start.m4a',
+            katame: './sounds/katame.m4a',
+            ryome: './sounds/ryome.m4a',
+            tsunuke: './sounds/tsunuke.m4a',
+            hansoku: './sounds/hansoku.m4a',
+            '1soku': './sounds/1soku.m4a',
+            '1sokuhan': './sounds/1sokuhan.m4a'
+        };
+
+        // 音声キーごとにプールを作成
+        const audioPools = {};
+        const poolIndices = {};
         let audioUnlocked = false;
+
+        function createAudioInstance(src) {
+            const audio = new Audio(src);
+            audio.preload = 'auto';
+            audio.playsInline = true;
+            audio.setAttribute('playsinline', '');
+            audio.setAttribute('webkit-playsinline', '');
+            return audio;
+        }
+
+        function initAudioPools() {
+            Object.keys(SOUND_FILES).forEach((key) => {
+                audioPools[key] = [];
+                poolIndices[key] = 0;
+                for (let i = 0; i < AUDIO_POOL_SIZE; i++) {
+                    audioPools[key].push(createAudioInstance(SOUND_FILES[key]));
+                }
+            });
+        }
+
+        initAudioPools();
 
         window.onload = () => {
             loadStateFromStorage();
@@ -240,16 +269,21 @@
         async function unlockAudio() {
             if (audioUnlocked) return true;
             try {
-                tanagoAudio.muted = true;
-                tanagoAudio.currentTime = 0;
-                await tanagoAudio.play();
-                tanagoAudio.pause();
-                tanagoAudio.currentTime = 0;
-                tanagoAudio.muted = false;
+                const normalPool = audioPools.normal || [];
+                for (let audio of normalPool) {
+                    audio.muted = true;
+                    audio.currentTime = 0;
+                    await audio.play();
+                    audio.pause();
+                    audio.currentTime = 0;
+                    audio.muted = false;
+                }
                 audioUnlocked = true;
                 return true;
             } catch (e) {
-                tanagoAudio.muted = false;
+                Object.values(audioPools).forEach(pool => {
+                    pool.forEach(audio => audio.muted = false);
+                });
                 return false;
             }
         }
@@ -278,7 +312,7 @@
             const btn = document.getElementById('wakeLockToggleBtn');
             if (wakeLockEnabled) {
                 requestWakeLock();
-                btn.className = "px-2 py-1.5 rounded-lg bg-emerald-600 text-white transition text-[11px] font-bold shadow";
+                btn.className = "px-2 py-1 rounded-lg bg-emerald-600 text-white transition text-[10px] font-bold shadow";
                 btn.innerText = "消灯:ON";
                 showToast("画面の消灯防止：ON");
             } else {
@@ -286,7 +320,7 @@
                     wakeLock.release();
                     wakeLock = null;
                 }
-                btn.className = "px-2 py-1.5 rounded-lg bg-slate-800 text-slate-400 transition text-[11px] font-bold";
+                btn.className = "px-2 py-1 rounded-lg bg-slate-800 text-slate-400 transition text-[10px] font-bold";
                 btn.innerText = "消灯:OFF";
                 showToast("画面の消灯防止：OFF");
             }
@@ -308,12 +342,12 @@
             const btn = document.getElementById('voiceGenderBtn');
             if (voiceGender === 'female') {
                 voiceGender = 'male';
-                btn.className = "px-2 py-1.5 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/50 transition text-[11px] font-bold";
+                btn.className = "px-2 py-1 rounded-lg bg-blue-600/30 text-blue-300 border border-blue-500/50 transition text-[10px] font-bold";
                 btn.innerText = "声:男性";
                 showToast("音声を「男性の声」に切り替えました");
             } else {
                 voiceGender = 'female';
-                btn.className = "px-2 py-1.5 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[11px] font-bold";
+                btn.className = "px-2 py-1 rounded-lg bg-pink-600/30 text-pink-300 border border-pink-500/50 transition text-[10px] font-bold";
                 btn.innerText = "声:女性";
                 showToast("音声を「女性の声」に切り替えました");
             }
@@ -345,7 +379,11 @@
             } catch (e) {}
         }
 
-        async function playTanagoAudio() {
+        /**
+         * 指定キーの音声ファイルをプールからローテーション再生する
+         * ファイルが存在しない・再生できない場合は fallbackKey（既定 'normal'）または合成音声へフォールバック
+         */
+        async function playSoundKey(key, isMilestone = false, fallbackText = 'たなご', fallbackKey = 'normal') {
             if (!voiceEnabled) return;
             try {
                 if ('speechSynthesis' in window) {
@@ -356,29 +394,79 @@
                     await unlockAudio();
                 }
 
-                tanagoAudio.pause();
-                tanagoAudio.currentTime = 0;
-                tanagoAudio.volume = NORMAL_VOLUME;
+                const pool = audioPools[key];
+                if (!pool || pool.length === 0) {
+                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                        return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                    }
+                    speakText(fallbackText, isMilestone);
+                    return;
+                }
 
-                const playPromise = tanagoAudio.play();
-                if (playPromise) await playPromise;
+                const idx = poolIndices[key] || 0;
+                const audio = pool[idx];
+                poolIndices[key] = (idx + 1) % AUDIO_POOL_SIZE;
+
+                audio.pause();
+                audio.currentTime = 0;
+                audio.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
+
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(() => {
+                        if (key !== fallbackKey && audioPools[fallbackKey]) {
+                            playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                        } else {
+                            speakText(fallbackText, isMilestone);
+                        }
+                    });
+                }
             } catch (e) {
-                speakText('たなご');
+                speakText(fallbackText, isMilestone);
             }
         }
 
+        async function playTanagoAudio() {
+            await playSoundKey('normal', false, 'たなご', 'normal');
+        }
+
         function speakTanagoForTotal(totalCount) {
-            let textToSpeak = '';
-            let isMilestone = false;
+            if (totalCount === 1) {
+                playSoundKey('katame', true, 'かためです', 'normal');
+                return;
+            }
+
+            if (totalCount === 2) {
+                playSoundKey('ryome', true, 'りょうめです', 'normal');
+                return;
+            }
+
+            if (totalCount === 10) {
+                playSoundKey('tsunuke', true, 'つぬけです', 'normal');
+                return;
+            }
+
+            if (totalCount === 50) {
+                playSoundKey('hansoku', true, 'はんそくです', 'normal');
+                return;
+            }
+
+            if (totalCount === 100) {
+                playSoundKey('1soku', true, '1そくです', 'normal');
+                return;
+            }
+
+            if (totalCount === 150) {
+                playSoundKey('1sokuhan', true, '1そくはんです', 'normal');
+                return;
+            }
 
             if (totalCount === 503) {
-                textToSpeak = 'ごー丸さんです';
-                isMilestone = true;
-            } else if (totalCount === 10) {
-                textToSpeak = 'つぬけです';
-                isMilestone = true;
-            } else if (totalCount > 0 && totalCount % 50 === 0) {
-                isMilestone = true;
+                speakText('ごー丸さんです', true);
+                return;
+            }
+
+            if (totalCount > 0 && totalCount % 50 === 0) {
                 const soku = Math.floor(totalCount / 100);
                 const isHan = (totalCount % 100) === 50;
                 const numbers = ['', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
@@ -390,22 +478,18 @@
                     sokuStr = soku + 'そく';
                 }
 
+                let textToSpeak = '';
                 if (isHan) {
-                    if (soku === 0) {
-                        textToSpeak = 'はんそくです';
-                    } else {
-                        textToSpeak = sokuStr + 'はんです';
-                    }
+                    textToSpeak = soku === 0 ? 'はんそくです' : `${sokuStr}はんです`;
                 } else {
-                    textToSpeak = sokuStr + 'です';
+                    textToSpeak = `${sokuStr}です`;
                 }
+
+                speakText(textToSpeak, true);
+                return;
             }
 
-            if (isMilestone) {
-                speakText(textToSpeak, true);
-            } else {
-                playTanagoAudio();
-            }
+            playTanagoAudio();
         }
 
         function triggerVibration() {
@@ -444,7 +528,7 @@
             actionHistory.push({ type: 'add', category: category, hourKey: hourKey });
 
             const total = getTotalCount();
-            if (!isTimerRunning && total === 1) startTimer();
+            if (!isTimerRunning && total === 1) startTimer(false);
 
             speakTanagoForTotal(total);
             triggerVibration();
@@ -468,7 +552,7 @@
             actionHistory.push({ type: 'add', category: 'any', hourKey: hourKey });
 
             const total = getTotalCount();
-            if (!isTimerRunning && total === 1) startTimer();
+            if (!isTimerRunning && total === 1) startTimer(false);
 
             speakTanagoForTotal(total);
             triggerVibration();
@@ -490,10 +574,6 @@
                 saveStateToStorage();
                 showToast('直近のカウントを1減らしました');
             }
-        }
-
-        function undoLastAction() {
-            decrementCounter();
         }
 
         function getTotalCount() {
@@ -519,18 +599,21 @@
             document.getElementById('subFemaleNum').innerText = f;
             document.getElementById('subOtherNum').innerText = o;
 
-            document.getElementById('totalCatchDisplay').innerText = total;
-            document.getElementById('giantCountNumber').innerText = String(a).padStart(3, '0');
+            document.getElementById('giantCountNumber').innerText = String(total).padStart(3, '0');
 
-            document.getElementById('undoBtn').disabled = actionHistory.length === 0;
             calculateCatchRate();
         }
 
-        function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(); }
-        
-        function startTimer() {
+        function toggleTimer() { isTimerRunning ? pauseTimer() : startTimer(true); }
+
+        // playStartSound: 「開始」ボタン押下時は true、1匹目カウントによる自動開始時は false
+        function startTimer(playStartSound = true) {
             if (isTimerRunning) return;
-            
+
+            if (playStartSound) {
+                playSoundKey('start', false, 'スタートします', 'normal');
+            }
+
             const now = Date.now();
             if (!firstActionRealTime) firstActionRealTime = now;
 
@@ -541,7 +624,7 @@
 
             isTimerRunning = true;
             document.getElementById('startTimerBtn').innerText = '一時停止';
-            
+
             if (!startTimeStamp) {
                 startTimeStamp = now;
             }
@@ -551,7 +634,7 @@
                 secondsElapsed = Math.floor((currentNow - startTimeStamp - totalPauseDurationMs) / 1000);
                 updateTimerDisplay();
                 calculateCatchRate();
-                
+
                 if (secondsElapsed >= 7200 && !hasAlerted2Hours) {
                     hasAlerted2Hours = true;
                     speakText("経過時間が2時間になりました。そろそろ休憩をとりましょう", true);
@@ -619,7 +702,7 @@
             if (total === 0) { showToast('釣果が0匹のため保存されません'); return; }
             const history = JSON.parse(localStorage.getItem('tanago_history') || '[]');
             const currentRate = secondsElapsed > 0 ? (total / (secondsElapsed / 3600)).toFixed(1) : total.toFixed(1);
-            
+
             let currentTotalPause = totalPauseDurationMs;
             if (pauseStartTimestamp) {
                 currentTotalPause += (Date.now() - pauseStartTimestamp);
@@ -689,8 +772,8 @@
             document.getElementById('historyModal').classList.remove('hidden');
         }
 
-        function closeHistoryModal() {
-            document.getElementById('historyModal').classList.add('hidden');
+        function closeHistoryModal() { 
+            document.getElementById('historyModal').classList.add('hidden'); 
         }
 
         function exportLogsCSV() {
@@ -753,10 +836,6 @@
 
                     if (data.location) document.getElementById('locationInput').value = data.location;
                     if (data.species) document.getElementById('speciesSelect').value = data.species;
-
-                    if (isTimerRunning && startTimeStamp) {
-                        startTimer();
-                    }
                 } catch (e) {}
             }
         }
@@ -778,10 +857,7 @@
             document.getElementById('toastMsg').innerText = msg;
             t.classList.remove('opacity-0');
             t.classList.add('opacity-100');
-            setTimeout(() => {
-                t.classList.remove('opacity-100');
-                t.classList.add('opacity-0');
-            }, 2000);
+            setTimeout(() => { t.classList.remove('opacity-100'); t.classList.add('opacity-0'); }, 2000);
         }
     </script>
 </body>
