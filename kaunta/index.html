@@ -218,16 +218,14 @@
         const HIGHLIGHT_VOLUME = 1.0;
         const AUDIO_POOL_SIZE = 4;
 
-        // 音声ファイルを使用する項目の定義（150匹目まで）
+        // 音声ファイルを使用する項目の定義（100匹目まで）
         const SOUND_FILES = {
             normal: './sounds/たなごちゃん.m4a',
             start: './sounds/start.m4a',
             katame: './sounds/katame.m4a',
             ryome: './sounds/ryome.m4a',
             tsunuke: './sounds/tsunuke.m4a',
-            hansoku: './sounds/hansoku.m4a',
-            '1soku': './sounds/1soku.m4a',
-            '1sokuhan': './sounds/1sokuhan.m4a'
+            '1soku': './sounds/1soku.m4a'
         };
 
         // 音声キーごとにプールを作成
@@ -269,14 +267,21 @@
         async function unlockAudio() {
             if (audioUnlocked) return true;
             try {
-                const normalPool = audioPools.normal || [];
-                for (let audio of normalPool) {
+                for (const key of Object.keys(audioPools)) {
+                    const pool = audioPools[key];
+                    if (!pool || pool.length === 0) continue;
+                    const audio = pool[0];
                     audio.muted = true;
                     audio.currentTime = 0;
-                    await audio.play();
-                    audio.pause();
-                    audio.currentTime = 0;
-                    audio.muted = false;
+                    try {
+                        await audio.play();
+                        audio.pause();
+                        audio.currentTime = 0;
+                    } catch (innerErr) {
+                        // 個別ファイルの読み込みエラーでも他のキーの解錠を続行
+                    } finally {
+                        audio.muted = false;
+                    }
                 }
                 audioUnlocked = true;
                 return true;
@@ -407,6 +412,18 @@
                 const audio = pool[idx];
                 poolIndices[key] = (idx + 1) % AUDIO_POOL_SIZE;
 
+                if (audio.error) {
+                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                        return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
+                    }
+                    speakText(fallbackText, isMilestone);
+                    return;
+                }
+
+                if (audio.readyState === 0) {
+                    audio.load();
+                }
+
                 audio.pause();
                 audio.currentTime = 0;
                 audio.volume = isMilestone ? HIGHLIGHT_VOLUME : NORMAL_VOLUME;
@@ -446,18 +463,23 @@
                 return;
             }
 
-            if (totalCount === 50) {
-                playSoundKey('hansoku', true, 'はんそくです', 'normal');
-                return;
-            }
-
             if (totalCount === 100) {
                 playSoundKey('1soku', true, '1そくです', 'normal');
                 return;
             }
 
             if (totalCount === 150) {
-                playSoundKey('1sokuhan', true, '1そくはんです', 'normal');
+                speakText('一そくはんです', true);
+                return;
+            }
+
+            if (totalCount === 200) {
+                speakText('二そくです', true);
+                return;
+            }
+
+            if (totalCount === 250) {
+                speakText('二そくはんです', true);
                 return;
             }
 
