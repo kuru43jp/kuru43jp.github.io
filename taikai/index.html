@@ -198,7 +198,7 @@
         // 大会開始・終了時刻スケジュール状態
         let scheduleStartTime = localStorage.getItem('tanago_schedule_start') || "";
         let scheduleEndTime = localStorage.getItem('tanago_schedule_end') || "";
-        let tournamentPhase = "idle"; // "idle" | "running" | "ended"
+        let tournamentPhase = "idle";
         let autoStartTriggeredForDay = "";
         let autoEndTriggeredForDay = "";
 
@@ -224,14 +224,18 @@
 
         const audioPools = {};
         const poolIndices = {};
-        let audioUnlocked = false;
+        const loadErrors = {};
 
-        function createAudioInstance(src) {
+        function createAudioInstance(key, src) {
             const audio = new Audio(src);
             audio.preload = 'auto';
             audio.playsInline = true;
             audio.setAttribute('playsinline', '');
             audio.setAttribute('webkit-playsinline', '');
+            audio.addEventListener('error', () => {
+                loadErrors[key] = true;
+                console.warn(`音声ファイル読み込みエラー [${key}]: ${src}`);
+            });
             return audio;
         }
 
@@ -239,46 +243,14 @@
             Object.keys(SOUND_FILES).forEach((key) => {
                 audioPools[key] = [];
                 poolIndices[key] = 0;
+                loadErrors[key] = false;
                 for (let i = 0; i < AUDIO_POOL_SIZE; i++) {
-                    audioPools[key].push(createAudioInstance(SOUND_FILES[key]));
+                    audioPools[key].push(createAudioInstance(key, SOUND_FILES[key]));
                 }
             });
         }
 
         initAudioPools();
-
-        async function unlockAudio() {
-            if (audioUnlocked) return true;
-            try {
-                for (const key of Object.keys(audioPools)) {
-                    const pool = audioPools[key];
-                    if (!pool || pool.length === 0) continue;
-                    const audio = pool[0];
-                    audio.muted = true;
-                    audio.currentTime = 0;
-                    try {
-                        await audio.play();
-                        audio.pause();
-                        audio.currentTime = 0;
-                    } catch (innerErr) {
-                        // 個別ファイルの読み込みエラーでも他のキーの解錠を続行
-                    } finally {
-                        audio.muted = false;
-                    }
-                }
-                audioUnlocked = true;
-                return true;
-            } catch (e) {
-                Object.values(audioPools).forEach(pool => {
-                    pool.forEach(audio => audio.muted = false);
-                });
-                return false;
-            }
-        }
-
-        document.addEventListener('pointerdown', () => {
-            unlockAudio();
-        }, { once: true });
 
         function toggleVoice() {
             voiceEnabled = !voiceEnabled;
@@ -310,20 +282,12 @@
             } catch (e) {}
         }
 
-        async function playSoundKey(key, isMilestone = false, fallbackText = 'たなごちゃんです', fallbackKey = 'normal') {
+        function playSoundKey(key, isMilestone = false, fallbackText = 'たなごちゃんです', fallbackKey = 'normal') {
             if (!voiceEnabled) return;
             try {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                }
-
-                if (!audioUnlocked) {
-                    await unlockAudio();
-                }
-
                 const pool = audioPools[key];
-                if (!pool || pool.length === 0) {
-                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                if (!pool || pool.length === 0 || loadErrors[key]) {
+                    if (key !== fallbackKey && audioPools[fallbackKey] && !loadErrors[fallbackKey]) {
                         return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
                     }
                     speakText(fallbackText, isMilestone);
@@ -335,7 +299,8 @@
                 poolIndices[key] = (idx + 1) % AUDIO_POOL_SIZE;
 
                 if (audio.error) {
-                    if (key !== fallbackKey && audioPools[fallbackKey]) {
+                    loadErrors[key] = true;
+                    if (key !== fallbackKey && audioPools[fallbackKey] && !loadErrors[fallbackKey]) {
                         return playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
                     }
                     speakText(fallbackText, isMilestone);
@@ -353,7 +318,7 @@
                 const playPromise = audio.play();
                 if (playPromise !== undefined) {
                     playPromise.catch(() => {
-                        if (key !== fallbackKey && audioPools[fallbackKey]) {
+                        if (key !== fallbackKey && audioPools[fallbackKey] && !loadErrors[fallbackKey]) {
                             playSoundKey(fallbackKey, isMilestone, fallbackText, fallbackKey);
                         } else {
                             speakText(fallbackText, isMilestone);
