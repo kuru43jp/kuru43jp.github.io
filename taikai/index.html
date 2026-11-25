@@ -68,7 +68,7 @@
         <!-- 初回登録画面 -->
         <section id="setupSection" class="bg-slate-900 rounded-2xl p-6 border border-slate-800 shadow-lg my-auto hidden">
             <h2 class="font-bold text-base text-slate-100 mb-2">📱 端末の担当選手登録</h2>
-            <p class="text-xs text-slate-400 mb-4">このスマートフォンで集計する選手名を入力してください。<br><span class="text-amber-400 font-bold">※「管理者」または「本部」と入力すると、初期化・大会開始/終了機能が有効になります。</span></p>
+            <p class="text-xs text-slate-400 mb-4">このスマートフォンで集計する選手名を入力してください。<br><span class="text-amber-400 font-bold">※「管理者」または「本部」と入力すると、初期化・大会時間設定機能が有効になります。</span></p>
             <div class="space-y-3">
                 <input type="text" id="terminalParticipantInput" placeholder="例: 選手A / 管理者 / 本部" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-3 text-sm text-slate-200 focus:outline-none focus:border-emerald-500">
                 <button onclick="registerTerminalParticipant()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3 rounded-xl text-sm shadow">この名前で決定して開始</button>
@@ -86,20 +86,27 @@
                     <button onclick="changeAssignedParticipant()" class="text-[11px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2.5 py-1.5 rounded-lg font-bold">名前変更</button>
                 </div>
 
-                <!-- 大会タイマー表示 -->
-                <div class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-2 flex items-center justify-between">
-                    <div>
-                        <span id="timerStateBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400">待機中</span>
-                        <span id="timerDisplay" class="ml-2 font-mono text-lg font-black text-amber-300">60:00</span>
+                <!-- 大会スケジュール・タイマー表示 -->
+                <div class="bg-slate-950 border border-slate-800 rounded-xl p-2.5 space-y-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-2">
+                            <span id="scheduleStateBadge" class="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400">未設定</span>
+                            <span id="scheduleRangeText" class="font-mono text-xs font-bold text-slate-200">--:-- 〜 --:--</span>
+                        </div>
+                        <span id="scheduleCountdownText" class="font-mono text-sm font-black text-amber-300">--:--</span>
                     </div>
-                    <div id="adminTimerControls" class="flex items-center space-x-1.5 hidden">
-                        <button onclick="setTimerMinutes()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 px-2 py-1 rounded font-bold">分設定</button>
-                        <button id="adminStartBtn" onclick="startTournamentTimer()" class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">
-                            ▶ 大会開始
+                    <div id="adminScheduleControls" class="flex items-center justify-between gap-1.5 pt-1 border-t border-slate-800/80 hidden">
+                        <button onclick="openScheduleModal()" class="text-[10px] bg-slate-800 hover:bg-slate-700 text-amber-300 px-2 py-1 rounded font-bold">
+                            🕒 時刻設定
                         </button>
-                        <button id="adminEndBtn" onclick="endTournamentTimer()" class="btn-active bg-rose-600 hover:bg-rose-500 text-white text-[11px] font-bold px-2.5 py-1 rounded-lg shadow">
-                            ⏹ 大会終了
-                        </button>
+                        <div class="flex items-center space-x-1">
+                            <button id="adminStartBtn" onclick="manualStartTournament()" class="btn-active bg-emerald-600 hover:bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">
+                                ▶ 大会開始
+                            </button>
+                            <button id="adminEndBtn" onclick="manualEndTournament()" class="btn-active bg-rose-600 hover:bg-rose-500 text-white text-[10px] font-bold px-2 py-1 rounded shadow">
+                                ⏹ 大会終了
+                            </button>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -136,6 +143,31 @@
         </div>
     </main>
 
+    <!-- 大会開始・終了時刻設定モーダル -->
+    <div id="scheduleModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xs p-5 shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+                <h2 class="font-bold text-slate-100 text-sm">🕒 大会開始・終了時刻設定</h2>
+                <button onclick="closeScheduleModal()" class="text-slate-400 hover:text-white text-base px-1">✕</button>
+            </div>
+            <div class="space-y-3 text-xs">
+                <div>
+                    <label for="startTimeInput" class="block text-slate-400 font-bold mb-1">大会開始時刻</label>
+                    <input type="time" id="startTimeInput" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <div>
+                    <label for="endTimeInput" class="block text-slate-400 font-bold mb-1">大会終了時刻</label>
+                    <input type="time" id="endTimeInput" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
+                </div>
+                <p class="text-[11px] text-slate-400">指定時刻になると自動で開始・終了音声が流れます。</p>
+            </div>
+            <div class="grid grid-cols-2 gap-2 pt-1">
+                <button onclick="clearScheduleTimes()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2.5 rounded-xl text-xs">クリア</button>
+                <button onclick="saveScheduleTimes()" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl text-xs shadow">保存</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ランキング速報モーダル -->
     <div id="rankingModal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
         <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-md max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
@@ -163,11 +195,12 @@
         let wakeLock = null;
         let isWakeLockEnabled = true;
 
-        // 大会タイマー状態
-        let configuredMinutes = Number(localStorage.getItem('tanago_timer_minutes')) || 60;
-        let remainingSeconds = configuredMinutes * 60;
-        let timerInterval = null;
-        let timerRunning = false;
+        // 大会開始・終了時刻スケジュール状態
+        let scheduleStartTime = localStorage.getItem('tanago_schedule_start') || "";
+        let scheduleEndTime = localStorage.getItem('tanago_schedule_end') || "";
+        let tournamentPhase = "idle"; // "idle" | "running" | "ended"
+        let autoStartTriggeredForDay = "";
+        let autoEndTriggeredForDay = "";
 
         // 音声読み上げ関連の設定
         let voiceEnabled = true;
@@ -332,75 +365,156 @@
             }
         }
 
-        function formatSeconds(sec) {
-            const safeSec = Math.max(0, sec);
-            const mins = Math.floor(safeSec / 60);
-            const secs = safeSec % 60;
+        function getTodayKey(now = new Date()) {
+            const y = now.getFullYear();
+            const m = String(now.getMonth() + 1).padStart(2, '0');
+            const d = String(now.getDate()).padStart(2, '0');
+            return `${y}-${m}-${d}`;
+        }
+
+        function parseTimeToTodayDate(hhmm, baseDate = new Date()) {
+            if (!hhmm || !/^\d{2}:\d{2}$/.test(hhmm)) return null;
+            const [h, m] = hhmm.split(':').map(Number);
+            return new Date(baseDate.getFullYear(), baseDate.getMonth(), baseDate.getDate(), h, m, 0, 0);
+        }
+
+        function formatDurationMMSS(totalSec) {
+            const safe = Math.max(0, Math.floor(totalSec));
+            const mins = Math.floor(safe / 60);
+            const secs = safe % 60;
             return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
         }
 
-        function updateTimerDisplay(stateLabel = null, badgeClass = null) {
-            const disp = document.getElementById('timerDisplay');
-            const badge = document.getElementById('timerStateBadge');
-            if (disp) disp.innerText = formatSeconds(remainingSeconds);
-            if (badge && stateLabel) badge.innerText = stateLabel;
-            if (badge && badgeClass) badge.className = badgeClass;
+        function openScheduleModal() {
+            document.getElementById('startTimeInput').value = scheduleStartTime;
+            document.getElementById('endTimeInput').value = scheduleEndTime;
+            document.getElementById('scheduleModal').classList.remove('hidden');
         }
 
-        function setTimerMinutes() {
-            if (timerRunning) {
-                showToast('開催中は変更できません');
-                return;
-            }
-            const input = prompt('大会の制限時間（分）を入力してください', String(configuredMinutes));
-            if (input === null) return;
-            const mins = parseInt(input, 10);
-            if (!Number.isFinite(mins) || mins < 1 || mins > 720) {
-                showToast('1〜720分で入力してください');
-                return;
-            }
-            configuredMinutes = mins;
-            remainingSeconds = mins * 60;
-            localStorage.setItem('tanago_timer_minutes', String(mins));
-            updateTimerDisplay('待機中', 'text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400');
-            showToast(`${mins}分にセットしました`);
+        function closeScheduleModal() {
+            document.getElementById('scheduleModal').classList.add('hidden');
         }
 
-        function startTournamentTimer() {
-            if (remainingSeconds <= 0) {
-                remainingSeconds = configuredMinutes * 60;
+        function saveScheduleTimes() {
+            const startVal = document.getElementById('startTimeInput').value;
+            const endVal = document.getElementById('endTimeInput').value;
+            if (startVal && endVal && startVal >= endVal) {
+                showToast('終了時刻は開始時刻より後に設定してください');
+                return;
             }
-            if (timerInterval) clearInterval(timerInterval);
-            timerRunning = true;
-            updateTimerDisplay('開催中', 'text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/60');
+            scheduleStartTime = startVal;
+            scheduleEndTime = endVal;
+            localStorage.setItem('tanago_schedule_start', scheduleStartTime);
+            localStorage.setItem('tanago_schedule_end', scheduleEndTime);
+            autoStartTriggeredForDay = "";
+            autoEndTriggeredForDay = "";
+            tournamentPhase = "idle";
+            closeScheduleModal();
+            updateScheduleUI();
+            showToast('大会時刻を保存しました');
+        }
+
+        function clearScheduleTimes() {
+            scheduleStartTime = "";
+            scheduleEndTime = "";
+            localStorage.removeItem('tanago_schedule_start');
+            localStorage.removeItem('tanago_schedule_end');
+            autoStartTriggeredForDay = "";
+            autoEndTriggeredForDay = "";
+            tournamentPhase = "idle";
+            document.getElementById('startTimeInput').value = "";
+            document.getElementById('endTimeInput').value = "";
+            closeScheduleModal();
+            updateScheduleUI();
+            showToast('時刻設定をクリアしました');
+        }
+
+        function manualStartTournament() {
+            const dayKey = getTodayKey();
+            tournamentPhase = "running";
+            autoStartTriggeredForDay = dayKey;
+            updateScheduleUI();
             playSoundKey('start', true, '大会開始です', 'normal');
             showToast('📢 大会開始！');
-
-            timerInterval = setInterval(() => {
-                remainingSeconds -= 1;
-                if (remainingSeconds <= 0) {
-                    remainingSeconds = 0;
-                    updateTimerDisplay('終了', 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700/60');
-                    clearInterval(timerInterval);
-                    timerInterval = null;
-                    timerRunning = false;
-                    playSoundKey('end', true, '大会終了です', 'normal');
-                    showToast('⏰ 制限時間終了！');
-                    return;
-                }
-                updateTimerDisplay();
-            }, 1000);
         }
 
-        function endTournamentTimer() {
-            if (timerInterval) {
-                clearInterval(timerInterval);
-                timerInterval = null;
-            }
-            timerRunning = false;
-            updateTimerDisplay('終了', 'text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700/60');
+        function manualEndTournament() {
+            const dayKey = getTodayKey();
+            tournamentPhase = "ended";
+            autoEndTriggeredForDay = dayKey;
+            updateScheduleUI();
             playSoundKey('end', true, '大会終了です', 'normal');
             showToast('⏹ 大会終了！');
+        }
+
+        function checkScheduleTick() {
+            const now = new Date();
+            const dayKey = getTodayKey(now);
+            const startDate = parseTimeToTodayDate(scheduleStartTime, now);
+            const endDate = parseTimeToTodayDate(scheduleEndTime, now);
+
+            if (startDate && now >= startDate && autoStartTriggeredForDay !== dayKey) {
+                autoStartTriggeredForDay = dayKey;
+                if (tournamentPhase !== "ended") {
+                    tournamentPhase = "running";
+                    playSoundKey('start', true, '大会開始です', 'normal');
+                    showToast('📢 開始時刻になりました！');
+                }
+            }
+
+            if (endDate && now >= endDate && autoEndTriggeredForDay !== dayKey) {
+                autoEndTriggeredForDay = dayKey;
+                tournamentPhase = "ended";
+                playSoundKey('end', true, '大会終了です', 'normal');
+                showToast('⏹ 終了時刻になりました！');
+            }
+
+            updateScheduleUI(now);
+        }
+
+        function updateScheduleUI(now = new Date()) {
+            const rangeEl = document.getElementById('scheduleRangeText');
+            const badgeEl = document.getElementById('scheduleStateBadge');
+            const cdEl = document.getElementById('scheduleCountdownText');
+            if (!rangeEl || !badgeEl || !cdEl) return;
+
+            const startText = scheduleStartTime || "--:--";
+            const endText = scheduleEndTime || "--:--";
+            rangeEl.innerText = `${startText} 〜 ${endText}`;
+
+            const startDate = parseTimeToTodayDate(scheduleStartTime, now);
+            const endDate = parseTimeToTodayDate(scheduleEndTime, now);
+
+            if (tournamentPhase === "ended") {
+                badgeEl.innerText = "終了";
+                badgeEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-rose-950 text-rose-300 border border-rose-700/60";
+                cdEl.innerText = "00:00";
+                return;
+            }
+
+            if (tournamentPhase === "running" || (startDate && now >= startDate && (!endDate || now < endDate))) {
+                badgeEl.innerText = "開催中";
+                badgeEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-950 text-emerald-300 border border-emerald-700/60";
+                if (endDate) {
+                    const diffSec = Math.max(0, Math.floor((endDate - now) / 1000));
+                    cdEl.innerText = `残 ${formatDurationMMSS(diffSec)}`;
+                } else {
+                    cdEl.innerText = "進行中";
+                }
+                return;
+            }
+
+            if (startDate && now < startDate) {
+                badgeEl.innerText = "開始待ち";
+                badgeEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-700/60";
+                const diffSec = Math.max(0, Math.floor((startDate - now) / 1000));
+                cdEl.innerText = `始 ${formatDurationMMSS(diffSec)}`;
+                return;
+            }
+
+            badgeEl.innerText = "待機中";
+            badgeEl.className = "text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400";
+            cdEl.innerText = "--:--";
         }
 
         function speakTanagoForTotal(totalCount) {
@@ -456,7 +570,8 @@
         }
 
         window.onload = () => {
-            updateTimerDisplay('待機中', 'text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-400');
+            updateScheduleUI();
+            setInterval(checkScheduleTick, 1000);
             checkTerminalSetup();
             requestWakeLock();
             if ('speechSynthesis' in window) {
@@ -543,13 +658,13 @@
                 document.getElementById('assignedParticipantName').innerText = assignedName;
 
                 const clearBtn = document.getElementById('adminClearBtn');
-                const timerControls = document.getElementById('adminTimerControls');
+                const scheduleControls = document.getElementById('adminScheduleControls');
                 if (isAdmin()) {
                     clearBtn.classList.remove('hidden');
-                    timerControls.classList.remove('hidden');
+                    scheduleControls.classList.remove('hidden');
                 } else {
                     clearBtn.classList.add('hidden');
-                    timerControls.classList.add('hidden');
+                    scheduleControls.classList.add('hidden');
                 }
 
                 await syncWithCloud();
